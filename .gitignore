@@ -52,3 +52,4 @@ pi_sysroot/
 
 # personal deploy target info
 scripts/deploy_target.json
+scripts/smartserow-ui.service

@@ -1,5 +1,6 @@
 {
-  "host": "pi@smartserow.local",
+  "user": "mikkeli",
+  "host": "192.168.2.102",
   "remote_path": "/opt/smartserow",
   "service_name": "smartserow-ui"
 }

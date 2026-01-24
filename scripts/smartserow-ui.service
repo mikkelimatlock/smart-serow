@@ -5,12 +5,13 @@ Wants=multi-user.target
 
 [Service]
 Type=simple
-User=pi
-Group=pi
+User=mikkeli
+Group=mikkeli
 WorkingDirectory=/opt/smartserow/bundle
 
-# DRM/KMS backend for direct framebuffer (no X11 needed)
-ExecStart=/opt/smartserow/bundle/smartserow_ui -b drm
+# GBM backend is compiled in. Just specify bundle path.
+# Scale factor 2.5 for 5.5" 1080p screen (high DPI)
+ExecStart=/opt/smartserow/bundle/smartserow_ui --bundle=/opt/smartserow/bundle --force-scale-factor=2.5
 
 # Restart on crash
 Restart=always
@@ -18,7 +19,8 @@ RestartSec=3
 
 # Environment for DRM/KMS access
 Environment=XDG_RUNTIME_DIR=/run/user/1000
-Environment=HOME=/home/pi
+Environment=HOME=/home/mikkeli
+Environment=LD_LIBRARY_PATH=/opt/smartserow/bundle/lib
 
 # Give time for GPU to initialize on boot
 ExecStartPre=/bin/sleep 2

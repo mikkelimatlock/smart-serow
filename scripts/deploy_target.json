@@ -1,0 +1,5 @@
+{
+  "host": "pi@smartserow.local",
+  "remote_path": "/opt/smartserow",
+  "service_name": "smartserow-ui"
+}

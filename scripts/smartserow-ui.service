@@ -1,0 +1,30 @@
+[Unit]
+Description=Smart Serow UI
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/opt/smartserow/bundle
+
+# DRM/KMS backend for direct framebuffer (no X11 needed)
+ExecStart=/opt/smartserow/bundle/smartserow_ui -b drm
+
+# Restart on crash
+Restart=always
+RestartSec=3
+
+# Environment for DRM/KMS access
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=HOME=/home/pi
+
+# Give time for GPU to initialize on boot
+ExecStartPre=/bin/sleep 2
+
+# Ensure clean shutdown
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

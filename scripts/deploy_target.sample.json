@@ -1,6 +1,6 @@
 {
   "user": "pi",
-  "host": "192.168.114.5",
+  "host": "raspberrypi.local",
   "remote_path": "/opt/smartserow",
   "service_name": "smartserow-ui"
 }

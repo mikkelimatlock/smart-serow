@@ -49,3 +49,6 @@ pi/ui/analysis_options.yaml
 
 # Pi (aarch64) dynamic linkers and stuff
 pi_sysroot/
+
+# personal deploy target info
+scripts/deploy_target.json

@@ -7,6 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CONFIG_FILE="$SCRIPT_DIR/deploy_target.json"
+# You'll need to create this file based on deploy_target.sample.json
 
 # Parse config
 if [ ! -f "$CONFIG_FILE" ]; then

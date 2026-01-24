@@ -1,2 +1,195 @@
 # Smart Serow
-Pi Zero + Arduino Nano motorcycle info terminal
+
+Pi Zero 2W + Arduino Nano motorcycle info terminal.
+
+## Architecture
+
+```
+┌─────────────────┐      ┌─────────────────┐
+│  Arduino Nano   │──────│  Pi Zero 2W     │
+│  (sensors)      │ UART │  (Flutter UI)   │──── Display
+└─────────────────┘      └─────────────────┘
+```
+
+- **Pi Zero 2W**: Runs Flutter UI via DRM/KMS (direct framebuffer, no X11)
+- **Arduino Nano**: Sensor interface (future)
+
+## Project Structure
+
+```
+smart-serow/
+├── arduino/              # Arduino sketches
+│   └── hello.ino
+├── pi/
+│   └── ui/               # Flutter app (elinux target)
+│       ├── lib/main.dart
+│       ├── pubspec.yaml
+│       └── elinux/       # Platform-specific build config
+├── scripts/
+│   ├── build.sh          # Cross-compile for ARM64
+│   ├── deploy.sh         # Push to Pi via rsync
+│   ├── deploy_target.json
+│   ├── pi_setup.sh       # One-time Pi setup
+│   └── smartserow-ui.service
+└── pi_sysroot/           # Pi libraries for cross-linking (gitignored)
+```
+
+---
+
+## Build Environment Setup (WSL2)
+
+### Requirements
+
+- **WSL2 with Debian Trixie** (glibc 2.38)
+- **flutter-elinux**: <https://github.com/aspect-apps/flutter-elinux>
+- **ARM64 cross-compiler**:
+  ```bash
+  sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+  ```
+
+### Pi Sysroot (for cross-linking)
+
+The ARM64 linker needs Pi's shared libraries to resolve symbols at link time.
+These don't execute locally - the linker just reads their symbol tables.
+
+**On the Pi**, grab the libs:
+```bash
+tar czf pi_libs.tar.gz \
+    /lib/aarch64-linux-gnu \
+    /usr/lib/aarch64-linux-gnu
+```
+
+**In WSL2**, extract to project root:
+```bash
+mkdir -p pi_sysroot
+tar xzf pi_libs.tar.gz -C pi_sysroot --strip-components=1
+```
+
+Key libraries needed:
+- libxkbcommon, libEGL, libdrm, libgbm, libinput
+- libudev, libsystemd, libfontconfig
+
+---
+
+## Target Environment (Pi Zero 2W)
+
+### Requirements
+
+- **Debian Trixie** (glibc 2.38 - must match build host!)
+- Display connected via HDMI/DSI
+
+### First-Time Setup
+
+```bash
+# Copy scripts to Pi
+scp scripts/pi_setup.sh scripts/smartserow-ui.service user@pi.local:~/
+
+# Run setup on Pi
+ssh user@pi.local
+chmod +x pi_setup.sh
+./pi_setup.sh
+```
+
+This installs:
+- Runtime dependencies (libgl, libgles, libdrm, libgbm, libinput, fonts)
+- Systemd service for auto-start
+- User permissions for DRM/KMS access
+
+---
+
+## Build & Deploy
+
+### Build (in WSL2)
+
+```bash
+./scripts/build.sh          # Normal build
+./scripts/build.sh --clean  # Clean CMake cache first
+```
+
+Build output: `pi/ui/build/elinux/arm64/release/bundle/`
+
+### Deploy
+
+Edit `scripts/deploy_target.json`:
+```json
+{
+  "user": "mikkeli",
+  "host": "smartserow.local",
+  "remote_path": "/opt/smartserow",
+  "service_name": "smartserow-ui"
+}
+```
+
+Deploy:
+```bash
+./scripts/deploy.sh           # Just copy files
+./scripts/deploy.sh --restart # Copy and restart service
+```
+
+### Verify
+
+```bash
+ssh user@pi.local 'systemctl status smartserow-ui'
+ssh user@pi.local 'journalctl -u smartserow-ui -f'  # Live logs
+```
+
+---
+
+## Display Backends
+
+Flutter-elinux supports multiple backends. We use **GBM** (DRM/KMS direct).
+
+| Backend | Use Case | Notes |
+|---------|----------|-------|
+| `gbm` | Production | Direct framebuffer, fast boot, no X11 |
+| `x11` | Debug | Needs X server, mouse/keyboard friendly |
+| `wayland` | - | Requires compositor, more dependencies |
+
+The service runs with `-b drm`. For X11 debugging on Pi:
+```bash
+startx &
+./smartserow_ui -b x11
+```
+
+---
+
+## Known Issues / Gotchas
+
+### glibc version mismatch
+Build host and Pi must have matching glibc. We use Debian Trixie on both.
+Symptom: `GLIBC_2.xx not found` at runtime.
+
+### CMake caches compiler
+If you change cross-compiler settings, run `./scripts/build.sh --clean`.
+
+### flutter-elinux generates all platforms
+The `flutter-elinux create` command scaffolds android/ios/web/etc.
+These are gitignored - we only need `elinux/` and `linux/`.
+
+### Libs not found at runtime
+If `libflutter_engine.so` not found, check `LD_LIBRARY_PATH` in the service file.
+Should point to `/opt/smartserow/bundle/lib`.
+
+---
+
+## Development Tips
+
+### Local testing (Linux desktop)
+```bash
+cd pi/ui
+flutter-elinux run -d linux
+```
+
+### Check what a binary needs
+```bash
+# On Pi
+ldd /opt/smartserow/bundle/smartserow_ui
+```
+
+### Pi service management
+```bash
+sudo systemctl start smartserow-ui
+sudo systemctl stop smartserow-ui
+sudo systemctl restart smartserow-ui
+journalctl -u smartserow-ui -f
+```

@@ -1,2 +1,47 @@
 # claude
 .claude/
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# flutter-elinux generated
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Generated code
+*.g.dart
+*.freezed.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Flutter platforms we don't use (Pi project - elinux only)
+pi/ui/android/
+pi/ui/ios/
+pi/ui/macos/
+pi/ui/web/
+pi/ui/windows/
+
+# Flutter generated files we don't need in repo
+pi/ui/.metadata
+pi/ui/README.md
+
+# Pi (aarch64) dynamic linkers and stuff
+pi_sysroot/

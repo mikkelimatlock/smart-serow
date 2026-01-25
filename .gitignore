@@ -53,3 +53,9 @@ pi_sysroot/
 # personal deploy target info
 scripts/deploy_target.json
 scripts/smartserow-ui.service
+
+# script python artifacts
+scripts/__pycache__/
+scripts/*.pyc
+scripts/*.pyo
+

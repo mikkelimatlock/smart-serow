@@ -56,10 +56,21 @@ def set_cross_compile_env():
     return env_vars
 
 
+def generate_theme() -> bool:
+    """Generate theme colors before build."""
+    import generate_theme as theme_gen
+    return theme_gen.main()
+
+
 def build(clean: bool = False) -> bool:
     """Run the build process. Returns True on success."""
     print("=== Smart Serow Build ===")
     print(f"Project: {UI_DIR}")
+
+    # Generate theme colors first
+    if not generate_theme():
+        print("ERROR: Theme generation failed")
+        return False
 
     # Check flutter-elinux
     flutter_path = check_flutter_elinux()

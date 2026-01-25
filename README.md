@@ -36,6 +36,17 @@ smart-serow/
 └── LICENSE
 ```
 
+## Theme System
+
+The UI uses JSON-based themes for different navigator models.
+
+- **Theme files**: `extra/themes/{navigator}.json` (e.g., `extra/themes/zumo.json`)
+- **Generation**: `scripts/generate_theme.py` converts JSON → `pi/ui/lib/theme/app_colors.dart`
+- **Auto-generation**: `build.py` runs theme generation before each Flutter build
+- **Fallback chain**: Tries `{navigator}.json` → `default.json` → hardcoded defaults
+
+To add a new theme, create `extra/themes/yourmodel.json` and set `"navigator": "yourmodel"` in `pi/ui/config.json`.
+
 ---
 
 ## Build Environment Setup (WSL2)

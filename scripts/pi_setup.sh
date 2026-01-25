@@ -27,6 +27,12 @@ echo "Creating app directory: $APP_DIR"
 sudo mkdir -p "$APP_DIR/bundle"
 sudo chown -R "$PI_USER:$PI_USER" "$APP_DIR"
 
+# Create assets directory in user home (for navigator images, etc.)
+ASSETS_DIR="/home/$PI_USER/smartserow-ui/assets"
+echo "Creating assets directory: $ASSETS_DIR"
+mkdir -p "$ASSETS_DIR/navigator"
+echo "  (deploy.py will sync extra/images here)"
+
 # Install runtime dependencies for flutter-elinux
 echo "Installing runtime dependencies..."
 sudo apt-get update

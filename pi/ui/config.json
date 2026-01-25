@@ -1,5 +1,5 @@
 {
-  "assets_path": "/home/pi/smartserow-ui/assets",
+  "assets_path": "/home/mikkeli/smartserow-ui/assets",
   "navigator": "rei",
   "overheat": {
     "threshold_celsius": 75.0,

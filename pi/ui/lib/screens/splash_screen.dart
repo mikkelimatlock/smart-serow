@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Splash screen - shown during initialization
 class SplashScreen extends StatelessWidget {
   final String status;
@@ -8,8 +10,10 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = AppTheme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -17,13 +21,13 @@ class SplashScreen extends StatelessWidget {
             Icon(
               Icons.terrain,
               size: 120,
-              color: Theme.of(context).colorScheme.primary,
+              color: theme.subdued,
             ),
             const SizedBox(height: 24),
             Text(
               'Smart Serow',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: Colors.white,
+                color: theme.foreground,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -31,7 +35,7 @@ class SplashScreen extends StatelessWidget {
             Text(
               status,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey,
+                color: theme.subdued,
               ),
             ),
           ],

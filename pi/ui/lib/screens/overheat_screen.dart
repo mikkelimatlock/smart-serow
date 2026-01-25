@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../services/config_service.dart';
 import '../services/pi_io.dart';
+import '../theme/app_theme.dart';
 
 /// Overheat warning screen with shutdown countdown
 ///
@@ -81,30 +82,31 @@ class _OverheatScreenState extends State<OverheatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = AppTheme.of(context);
     final threshold = ConfigService.instance.overheatThreshold;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Warning icon
-            const Icon(
+            Icon(
               Icons.warning_amber_rounded,
               size: 100,
-              color: Colors.red,
+              color: theme.highlight,
             ),
 
             const SizedBox(height: 16),
 
             // OVERHEATING text
-            const Text(
+            Text(
               'OVERHEATING',
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
-                color: Colors.red,
+                color: theme.highlight,
                 letterSpacing: 4,
               ),
             ),
@@ -114,10 +116,10 @@ class _OverheatScreenState extends State<OverheatScreen> {
             // Current temperature
             Text(
               _currentTemp != null ? '${_currentTemp!.toStringAsFixed(1)}°C' : '—',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 120,
                 fontWeight: FontWeight.w200,
-                color: Colors.white,
+                color: theme.foreground,
                 height: 1,
               ),
             ),
@@ -127,9 +129,9 @@ class _OverheatScreenState extends State<OverheatScreen> {
             // Threshold info
             Text(
               'Threshold: ${threshold.toStringAsFixed(0)}°C',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
-                color: Colors.grey,
+                color: theme.subdued,
               ),
             ),
 
@@ -138,9 +140,9 @@ class _OverheatScreenState extends State<OverheatScreen> {
             // Countdown
             Text(
               'Shutdown in $_secondsRemaining s',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
-                color: Colors.orange,
+                color: theme.highlight,
                 fontWeight: FontWeight.w500,
               ),
             ),

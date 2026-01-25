@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-import '../services/config_service.dart';
 import '../services/pi_io.dart';
+import '../theme/app_theme.dart';
+import '../widgets/navigator_widget.dart';
 import '../widgets/stat_box.dart';
+
+// test service for triggers
+import '../services/test_flipflop_service.dart';
 
 /// Main dashboard - displays Pi vitals and placeholder stats
 class DashboardScreen extends StatefulWidget {
@@ -17,6 +20,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _random = Random();
+  final _navigatorKey = GlobalKey<NavigatorWidgetState>();
   Timer? _timer;
 
   double? _piTemp;
@@ -40,33 +44,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _temp = 20 + _random.nextInt(60);
       });
     });
+
+    // DEBUG: flip-flop theme + navigator every 2s
+    TestFlipFlopService.instance.start(navigatorKey: _navigatorKey);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    TestFlipFlopService.instance.stop();
     super.dispose();
-  }
-
-  /// Build navigator image from filesystem
-  Widget _buildNavigatorImage() {
-    final config = ConfigService.instance;
-    final imagePath = '${config.assetsPath}/navigator/${config.navigator}/default.png';
-
-    return Image.file(
-      File(imagePath),
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        // Graceful fallback - empty box if image missing
-        return const SizedBox.shrink();
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = AppTheme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.background,
       body: Padding(
         padding: const EdgeInsets.all(32),
         child: Row(
@@ -84,20 +79,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         'SMART SEROW',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.teal,
+                          color: theme.subdued,
                           letterSpacing: 2,
                         ),
                       ),
                       Text(
                         '${_voltage.toStringAsFixed(1)}V',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _voltage < 12.0 ? Colors.red : Colors.green,
+                          color: _voltage < 12.0 ? theme.highlight : theme.foreground,
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 20),
 
                   // Main Pi temperature display
                   Expanded(
@@ -107,17 +102,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             _piTemp != null ? _piTemp!.toStringAsFixed(1) : '—',
-                            style: const TextStyle(
-                              fontSize: 180,
+                            style: TextStyle(
+                              fontSize: 250,
                               fontWeight: FontWeight.w200,
-                              color: Colors.white,
+                              color: theme.foreground,
                               height: 1,
                             ),
                           ),
                           Text(
                             'Pi Temp',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Colors.grey,
+                              color: theme.subdued,
                             ),
                           ),
                         ],
@@ -144,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               flex: 1,
               child: Center(
-                child: _buildNavigatorImage(),
+                child: NavigatorWidget(key: _navigatorKey),
               ),
             ),
           ],

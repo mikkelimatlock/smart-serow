@@ -1,0 +1,14 @@
+{
+  "dark": {
+    "background": "#101010",
+    "foreground": "#EAEAEA",
+    "highlight": "#FA1504",
+    "subdued": "#E47841"
+  },
+  "bright": {
+    "background": "#E47841",
+    "foreground": "#202020",
+    "highlight": "#F0F0F0",
+    "subdued": "#BC4600"
+  }
+}

@@ -20,6 +20,8 @@ class SmartSerowApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
+        fontFamily: 'DIN1451',
+        fontFamilyFallback: const ['NotoSans', 'Roboto'],
       ),
       home: const AppRoot(),
     );

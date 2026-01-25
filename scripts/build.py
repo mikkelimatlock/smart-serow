@@ -71,6 +71,14 @@ def build(clean: bool = False) -> bool:
 
     os.chdir(UI_DIR)
 
+    # Prepare assets (fonts, images)
+    prepare_script = SCRIPT_DIR / "prepare_assets.sh"
+    if prepare_script.exists():
+        print("Preparing assets...")
+        run(["bash", str(prepare_script)])
+    else:
+        print(f"WARNING: {prepare_script} not found")
+
     # Initialize elinux project if needed
     elinux_dir = UI_DIR / "elinux"
     if not elinux_dir.exists():

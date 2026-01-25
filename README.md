@@ -24,15 +24,16 @@ smart-serow/
 │   ├── images/             # Static images
 │   └── themes/             # Theme JSON files (→ generate_theme.py)
 ├── pi/
-│   └── ui/                 # Flutter app
-│       ├── lib/
-│       │   ├── main.dart           # Entry point
-│       │   ├── app_root.dart       # Screen state management
-│       │   ├── screens/            # Full-screen views
-│       │   ├── widgets/            # Reusable components
-│       │   ├── services/           # Singletons (config, sensors, theme)
-│       │   └── theme/              # Colors and theme provider
-│       └── config.json             # Runtime config (navigator, paths)
+│   ├── ui/                 # Flutter app
+│   │   ├── lib/
+│   │   │   ├── main.dart           # Entry point
+│   │   │   ├── app_root.dart       # Screen state management
+│   │   │   ├── screens/            # Full-screen views
+│   │   │   ├── widgets/            # Reusable components
+│   │   │   ├── services/           # Singletons (config, sensors, theme)
+│   │   │   └── theme/              # Colors and theme provider
+│   │   └── config.json             # Runtime config (navigator, paths)
+│   └── backend/            # Python GPS service (Flask + gpsd)
 ├── scripts/                # Build, deploy, and setup helpers
 └── pi_sysroot/             # Pi libraries for cross-linking (gitignored)
 ```

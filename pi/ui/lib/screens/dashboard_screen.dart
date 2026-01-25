@@ -72,21 +72,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header
+                  // Header (voltage
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        'SMART SEROW',
+                        'CHASSIS VOLTAGE ',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 80,
                           color: theme.subdued,
-                          letterSpacing: 2,
+                          letterSpacing: 1,
                         ),
                       ),
                       Text(
                         '${_voltage.toStringAsFixed(1)}V',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _voltage < 12.0 ? theme.highlight : theme.foreground,
+                          fontSize: 80,
+                          color: _voltage < 11.9 ? theme.highlight : theme.foreground,
                         ),
                       ),
                     ],
@@ -112,6 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Text(
                             'Pi Temp',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontSize: 80,
                               color: theme.subdued,
                             ),
                           ),

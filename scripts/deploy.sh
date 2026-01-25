@@ -27,6 +27,7 @@ SERVICE_NAME=$(read_json service_name)
 
 SSH_TARGET="$PI_USER@$PI_HOST"
 BUILD_DIR="$PROJECT_ROOT/pi/ui/build/elinux/arm64/release/bundle"
+CONFIG_SRC="$PROJECT_ROOT/pi/ui/config.json"
 
 echo "=== Smart Serow Deploy ==="
 echo "Target: $SSH_TARGET:$REMOTE_PATH"
@@ -43,6 +44,16 @@ echo "Syncing files..."
 rsync -avz --delete \
     "$BUILD_DIR/" \
     "$SSH_TARGET:$REMOTE_PATH/bundle/"
+
+# Sync config.json (sits next to executable in bundle)
+if [ -f "$CONFIG_SRC" ]; then
+    echo ""
+    echo "Syncing config.json..."
+    rsync -avz "$CONFIG_SRC" "$SSH_TARGET:$REMOTE_PATH/bundle/config.json"
+else
+    echo ""
+    echo "Note: No config.json found, using defaults"
+fi
 
 # Restart service if requested
 RESTART="${1:-}"

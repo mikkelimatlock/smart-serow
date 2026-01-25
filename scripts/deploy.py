@@ -16,6 +16,7 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 PROJECT_ROOT = SCRIPT_DIR.parent
 CONFIG_FILE = SCRIPT_DIR / "deploy_target.json"
 BUILD_DIR = PROJECT_ROOT / "pi" / "ui" / "build" / "elinux" / "arm64" / "release" / "bundle"
+CONFIG_SRC = PROJECT_ROOT / "pi" / "ui" / "config.json"
 
 
 def run(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedProcess:
@@ -62,6 +63,19 @@ def deploy(restart: bool = False) -> bool:
         f"{BUILD_DIR}/",
         f"{ssh_target}:{remote_path}/bundle/",
     ])
+
+    # Sync config.json (sits next to executable in bundle)
+    if CONFIG_SRC.exists():
+        print()
+        print("Syncing config.json...")
+        run([
+            "rsync", "-avz",
+            str(CONFIG_SRC),
+            f"{ssh_target}:{remote_path}/bundle/config.json",
+        ])
+    else:
+        print()
+        print("Note: No config.json found, using defaults")
 
     # Restart service if requested
     if restart:

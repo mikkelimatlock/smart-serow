@@ -1,4 +1,6 @@
 {
+  "assets_path": "/home/pi/smartserow-ui/assets",
+  "navigator": "rei",
   "overheat": {
     "threshold_celsius": 75.0,
     "trigger_duration_sec": 10,

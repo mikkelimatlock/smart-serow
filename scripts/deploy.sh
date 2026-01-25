@@ -28,6 +28,7 @@ SERVICE_NAME=$(read_json service_name)
 SSH_TARGET="$PI_USER@$PI_HOST"
 BUILD_DIR="$PROJECT_ROOT/pi/ui/build/elinux/arm64/release/bundle"
 CONFIG_SRC="$PROJECT_ROOT/pi/ui/config.json"
+IMAGES_SRC="$PROJECT_ROOT/extra/images"
 
 echo "=== Smart Serow Deploy ==="
 echo "Target: $SSH_TARGET:$REMOTE_PATH"
@@ -53,6 +54,18 @@ if [ -f "$CONFIG_SRC" ]; then
 else
     echo ""
     echo "Note: No config.json found, using defaults"
+fi
+
+# Sync images to assets path
+if [ -d "$IMAGES_SRC" ]; then
+    # Read assets_path from config, fall back to default
+    ASSETS_PATH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('assets_path', '$REMOTE_PATH/assets'))" 2>/dev/null || echo "$REMOTE_PATH/assets")
+    echo ""
+    echo "Syncing images to $ASSETS_PATH..."
+    rsync -avz "$IMAGES_SRC/" "$SSH_TARGET:$ASSETS_PATH/"
+else
+    echo ""
+    echo "Note: No extra/images folder found, skipping image sync"
 fi
 
 # Restart service if requested

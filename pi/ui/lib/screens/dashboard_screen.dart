@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../services/config_service.dart';
 import '../services/pi_io.dart';
 import '../widgets/stat_box.dart';
 
@@ -44,6 +46,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  /// Build navigator image from filesystem
+  Widget _buildNavigatorImage() {
+    final config = ConfigService.instance;
+    final imagePath = '${config.assetsPath}/navigator/${config.navigator}/default.png';
+
+    return Image.file(
+      File(imagePath),
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        // Graceful fallback - empty box if image missing
+        return const SizedBox.shrink();
+      },
+    );
   }
 
   @override
@@ -127,14 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               flex: 1,
               child: Center(
-                child: Image.asset(
-                  'assets/images/rei_default.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Graceful fallback - empty box if image missing
-                    return const SizedBox.shrink();
-                  },
-                ),
+                child: _buildNavigatorImage(),
               ),
             ),
           ],

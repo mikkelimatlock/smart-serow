@@ -16,6 +16,10 @@ class ConfigService {
   static const double _defaultThreshold = 80.0;
   static const int _defaultTriggerDuration = 10;
   static const int _defaultShutdownDelay = 10;
+  static const String _defaultNavigator = 'rei';
+
+  // Executable directory (for fallback paths)
+  late final String _exeDir;
 
   /// Load config from JSON file
   ///
@@ -24,11 +28,12 @@ class ConfigService {
   Future<void> load() async {
     if (_loaded) return;
 
+    // Config file sits next to the executable
+    final exePath = Platform.resolvedExecutable;
+    _exeDir = File(exePath).parent.path;
+
     try {
-      // Config file sits next to the executable
-      final exePath = Platform.resolvedExecutable;
-      final exeDir = File(exePath).parent.path;
-      final configPath = '$exeDir${Platform.pathSeparator}config.json';
+      final configPath = '$_exeDir${Platform.pathSeparator}config.json';
 
       final file = File(configPath);
       if (await file.exists()) {
@@ -65,5 +70,20 @@ class ConfigService {
     final value = overheat?['shutdown_delay_sec'];
     if (value is int) return Duration(seconds: value);
     return Duration(seconds: _defaultShutdownDelay);
+  }
+
+  /// Path to external assets directory
+  String get assetsPath {
+    final value = _config?['assets_path'];
+    if (value is String && value.isNotEmpty) return value;
+    // Fallback: assets/ next to executable
+    return '$_exeDir${Platform.pathSeparator}assets';
+  }
+
+  /// Navigator character name (subfolder in assets/navigator/)
+  String get navigator {
+    final value = _config?['navigator'];
+    if (value is String && value.isNotEmpty) return value;
+    return _defaultNavigator;
   }
 }

@@ -36,15 +36,6 @@ echo "Cross-compiler: $CXX"
 
 cd "$UI_DIR"
 
-# Prepare assets (fonts, images)
-PREPARE_SCRIPT="$SCRIPT_DIR/prepare_assets.sh"
-if [ -x "$PREPARE_SCRIPT" ]; then
-    echo "Preparing assets..."
-    "$PREPARE_SCRIPT"
-else
-    echo "WARNING: $PREPARE_SCRIPT not found or not executable"
-fi
-
 # Initialize elinux project if not already configured
 if [ ! -d "elinux" ]; then
     echo "Initializing elinux project structure..."

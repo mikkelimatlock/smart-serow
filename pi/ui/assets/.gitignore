@@ -1,0 +1,4 @@
+# Ignore font files (may have licensing restrictions)
+# Keep .gitkeep to preserve directory structure
+fonts/*
+!fonts/.gitkeep

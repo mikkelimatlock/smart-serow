@@ -17,6 +17,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 CONFIG_FILE = SCRIPT_DIR / "deploy_target.json"
 BUILD_DIR = PROJECT_ROOT / "pi" / "ui" / "build" / "elinux" / "arm64" / "release" / "bundle"
 CONFIG_SRC = PROJECT_ROOT / "pi" / "ui" / "config.json"
+IMAGES_SRC = PROJECT_ROOT / "extra" / "images"
 
 
 def run(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedProcess:
@@ -76,6 +77,20 @@ def deploy(restart: bool = False) -> bool:
     else:
         print()
         print("Note: No config.json found, using defaults")
+
+    # Sync images to assets path
+    if IMAGES_SRC.exists():
+        assets_path = config.get("assets_path", f"{remote_path}/assets")
+        print()
+        print(f"Syncing images to {assets_path}...")
+        run([
+            "rsync", "-avz",
+            f"{IMAGES_SRC}/",
+            f"{ssh_target}:{assets_path}/",
+        ])
+    else:
+        print()
+        print("Note: No extra/images folder found, skipping image sync")
 
     # Restart service if requested
     if restart:

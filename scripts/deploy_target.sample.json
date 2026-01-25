@@ -2,5 +2,6 @@
   "user": "pi",
   "host": "raspberrypi.local",
   "remote_path": "/opt/smartserow",
-  "service_name": "smartserow-ui"
+  "service_name": "smartserow-ui",
+  "assets_path": "~/smartserow-ui/assets"
 }

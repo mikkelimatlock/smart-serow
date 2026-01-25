@@ -59,3 +59,11 @@ scripts/__pycache__/
 scripts/*.pyc
 scripts/*.pyo
 
+# extra resources
+extra/fonts/*.ttf
+extra/fonts/*.otf
+extra/images/*.png
+extra/images/*.jpg
+extra/images/*.jpeg
+extra/images/*.gif
+extra/images/*.svg

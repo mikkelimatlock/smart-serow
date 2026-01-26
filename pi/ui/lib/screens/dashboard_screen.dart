@@ -6,6 +6,8 @@ import '../services/pi_io.dart';
 import '../theme/app_theme.dart';
 import '../widgets/navigator_widget.dart';
 import '../widgets/stat_box.dart';
+import '../widgets/stat_box_main.dart';
+import '../widgets/system_bar.dart';
 
 // test service for triggers
 import '../services/test_flipflop_service.dart';
@@ -26,7 +28,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? _piTemp;
   int _rpm = 0;
   double _voltage = 12.6;
-  int _temp = 25;
+  int _engineTemp = 25;
+
+  // Placeholder values for system bar
+  int? _gpsSatellites;
+  int? _lteSignal;
 
   @override
   void initState() {
@@ -41,7 +47,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Placeholder random data - will be replaced with real sensors
         _rpm = 1000 + _random.nextInt(8000);
         _voltage = 11.5 + _random.nextDouble() * 2;
-        _temp = 20 + _random.nextInt(60);
+        _engineTemp = 20 + _random.nextInt(60);
+
+        // Placeholder: GPS satellites (null = disconnected, 0 = no fix, 3-12 = typical)
+        _gpsSatellites = _random.nextBool() ? _random.nextInt(12) : null;
+
+        // Placeholder: LTE signal (null = disconnected, 0-4 = signal bars)
+        _lteSignal = _random.nextBool() ? _random.nextInt(5) : null;
       });
     });
 
@@ -63,7 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: theme.background,
       body: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             // Left side: All dashboard widgets (flex: 2)
@@ -72,75 +84,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header (voltage
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Container(),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          'Chassis voltage ',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 60,
-                            color: theme.subdued,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          '${_voltage.toStringAsFixed(1)}V',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 80,
-                            color: _voltage < 11.9 ? theme.highlight : theme.foreground,
-                          ),
-                        ),
-                      )
-                    ],
+                  // System status bar
+                  SystemBar(
+                    gpsSatellites: _gpsSatellites,
+                    lteSignal: _lteSignal,
+                    piTemp: _piTemp,
+                    voltage: _voltage,
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
-                  // Main Pi temperature display
+                  // Main content area - big stat boxes
                   Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _piTemp != null ? _piTemp!.toStringAsFixed(1) : '—',
-                            style: TextStyle(
-                              fontSize: 250,
-                              fontWeight: FontWeight.w200,
-                              color: theme.foreground,
-                              height: 1,
-                            ),
-                          ),
-                          Text(
-                            'Pi Temp',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontSize: 80,
-                              color: theme.subdued,
-                            ),
-                          ),
-                        ],
-                      ),
+                    flex: 8,
+                    child: Row(
+                      children: [
+                        // Speed - placeholder, will come from GPS
+                        StatBoxMain(
+                          value: _rpm.toString(),
+                          label: 'RPM',
+                        ),
+                        // Add second StatBoxMain here for 2-up layout:
+                        // StatBoxMain(value: '4500', unit: 'rpm', label: 'TACH'),
+                      ],
                     ),
                   ),
 
                   // Bottom stats row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      StatBox(label: 'RPM', value: _rpm.toString()),
-                      StatBox(label: 'ENG', value: '$_temp°C'),
-                      StatBox(label: 'GEAR', value: '—'),
-                    ],
+                  Expanded(
+                    flex: 2,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        StatBox(value: _rpm.toString(), label: 'RPM'),
+                        StatBox(value: '$_engineTemp', unit: '°C', label: 'ENG'),
+                        const StatBox(value: '—', label: 'GEAR'),
+                      ],
+                    ),
                   ),
                 ],
               ),

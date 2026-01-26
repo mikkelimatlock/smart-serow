@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// A labeled stat display box for the dashboard bottom row.
-class StatBox extends StatelessWidget {
+/// Large stat display for main dashboard area.
+/// Fixed-size container - content changes don't affect layout.
+class StatBoxMain extends StatelessWidget {
   final String value;
   final String? unit;
   final String label;
   final int flex;
 
-  const StatBox({
+  const StatBoxMain({
     super.key,
     required this.value,
     this.unit,
@@ -25,12 +26,13 @@ class StatBox extends StatelessWidget {
       flex: flex,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // Scale fonts relative to box height for consistent proportions
           final baseSize = constraints.maxHeight * 0.4;
 
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Value + optional unit
+              // Value + optional unit row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -40,19 +42,18 @@ class StatBox extends StatelessWidget {
                     value,
                     style: TextStyle(
                       fontSize: baseSize,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w300,
                       fontFeatures: const [FontFeature.tabularFigures()],
                       color: theme.foreground,
                       height: 1,
                     ),
                   ),
-                  SizedBox(width: baseSize * 0.1),
                   if (unit != null) ...[
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 8),
                     Text(
                       unit!,
                       style: TextStyle(
-                        fontSize: baseSize * 0.5,
+                        fontSize: baseSize * 0.4,
                         fontWeight: FontWeight.w400,
                         color: theme.subdued,
                         height: 1,
@@ -66,10 +67,10 @@ class StatBox extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: baseSize * 0.6,
+                  fontSize: baseSize * 0.35,
                   fontWeight: FontWeight.w400,
                   color: theme.subdued,
-                  letterSpacing: 1,
+                  letterSpacing: 2,
                 ),
               ),
             ],

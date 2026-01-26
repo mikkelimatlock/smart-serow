@@ -76,6 +76,18 @@ def deploy(restart: bool = False) -> bool:
         f"{ssh_target}:{remote_path}/",
     ])
 
+    # Run uv sync to install/update dependencies
+    # Use full path since non-interactive SSH doesn't load .bashrc
+    print()
+    print("Running uv sync...")
+    result = run(
+        ["ssh", ssh_target, f"cd {remote_path} && ~/.local/bin/uv sync"],
+        check=False,
+    )
+    if result.returncode != 0:
+        print("WARNING: uv sync failed - dependencies may be out of date")
+        print("Make sure uv is installed on Pi: curl -LsSf https://astral.sh/uv/install.sh | sh")
+
     # Restart service if requested
     if restart:
         print()
@@ -91,11 +103,9 @@ def deploy(restart: bool = False) -> bool:
         print("Or run this script with --restart flag")
 
     print()
-    print("Note: First-time setup on Pi requires:")
+    print("Note: First-time setup on Pi requires uv to be installed:")
     print(f"  ssh {ssh_target}")
-    print(f"  cd {remote_path}")
     print("  curl -LsSf https://astral.sh/uv/install.sh | sh")
-    print("  uv sync")
 
     return True
 

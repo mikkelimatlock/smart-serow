@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../services/backend_service.dart';
+import '../services/websocket_service.dart';
 import '../services/pi_io.dart';
 import '../theme/app_theme.dart';
 import '../widgets/navigator_widget.dart';
@@ -21,41 +22,94 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final _random = Random();
   final _navigatorKey = GlobalKey<NavigatorWidgetState>();
-  Timer? _timer;
 
+  // Timer for Pi temp only (safety critical, direct file read)
+  Timer? _piTempTimer;
+
+  // WebSocket stream subscriptions
+  StreamSubscription<ArduinoData>? _arduinoSub;
+  StreamSubscription<GpsData>? _gpsSub;
+  StreamSubscription<WsConnectionState>? _connectionSub;
+
+  // Pi temperature - direct file read (safety critical)
   double? _piTemp;
-  int _rpm = 0;
-  double _voltage = 12.6;
-  int _engineTemp = 25;
+
+  // From backend - Arduino data
+  int? _rpm;
+  double? _voltage;
+  int? _engineTemp;
+  int? _gear;
+
+  // From backend - GPS data
+  double? _gpsSpeed;
 
   // Placeholder values for system bar
   int? _gpsSatellites;
   int? _lteSignal;
 
+  // WebSocket connection state
+  WsConnectionState _wsState = WsConnectionState.disconnected;
+
   @override
   void initState() {
     super.initState();
 
-    // Update values periodically
-    _timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+    // Connect to WebSocket
+    WebSocketService.instance.connect();
+
+    // Subscribe to Arduino data stream
+    _arduinoSub = WebSocketService.instance.arduinoStream.listen((data) {
       setState(() {
-        // Pi temp - sync read from cache, async refresh happens in background
-        _piTemp = PiIO.instance.getTemperature();
-
-        // Placeholder random data - will be replaced with real sensors
-        _rpm = 1000 + _random.nextInt(8000);
-        _voltage = 11.5 + _random.nextDouble() * 2;
-        _engineTemp = 20 + _random.nextInt(60);
-
-        // Placeholder: GPS satellites (null = disconnected, 0 = no fix, 3-12 = typical)
-        _gpsSatellites = _random.nextBool() ? _random.nextInt(12) : null;
-
-        // Placeholder: LTE signal (null = disconnected, 0-4 = signal bars)
-        _lteSignal = _random.nextBool() ? _random.nextInt(5) : null;
+        _voltage = data.voltage;
+        _rpm = data.rpm;
+        _engineTemp = data.engTemp;
+        _gear = data.gear;
       });
     });
+
+    // Subscribe to GPS data stream
+    _gpsSub = WebSocketService.instance.gpsStream.listen((data) {
+      setState(() {
+        _gpsSpeed = data.speed;
+        // Derive satellites from mode (placeholder logic)
+        _gpsSatellites = data.mode == 3 ? 8 : (data.mode == 2 ? 4 : 0);
+      });
+    });
+
+    // Subscribe to connection state
+    _connectionSub = WebSocketService.instance.connectionStream.listen((state) {
+      setState(() {
+        _wsState = state;
+      });
+    });
+
+    // Timer for Pi temp only (safety critical - bypasses backend)
+    _piTempTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      setState(() {
+        _piTemp = PiIO.instance.getTemperature();
+      });
+    });
+
+    // Initialize with any cached data from WebSocketService
+    final cachedArduino = WebSocketService.instance.latestArduino;
+    if (cachedArduino != null) {
+      _voltage = cachedArduino.voltage;
+      _rpm = cachedArduino.rpm;
+      _engineTemp = cachedArduino.engTemp;
+      _gear = cachedArduino.gear;
+    }
+
+    final cachedGps = WebSocketService.instance.latestGps;
+    if (cachedGps != null) {
+      _gpsSpeed = cachedGps.speed;
+      _gpsSatellites = cachedGps.mode == 3 ? 8 : (cachedGps.mode == 2 ? 4 : 0);
+    }
+
+    _wsState = WebSocketService.instance.connectionState;
+
+    // Placeholder: LTE signal (TODO: wire up when LTE service exists)
+    _lteSignal = null;
 
     // DEBUG: flip-flop theme + navigator every 2s
     TestFlipFlopService.instance.start(navigatorKey: _navigatorKey);
@@ -63,9 +117,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _piTempTimer?.cancel();
+    _arduinoSub?.cancel();
+    _gpsSub?.cancel();
+    _connectionSub?.cancel();
     TestFlipFlopService.instance.stop();
     super.dispose();
+  }
+
+  /// Format gear for display: null → "—", 0 → "N", 1-6 → "1"-"6"
+  String _formatGear(int? gear) {
+    if (gear == null) return '—';
+    if (gear == 0) return 'N';
+    return gear.toString();
+  }
+
+  /// Format nullable int for display
+  String _formatInt(int? value) => value?.toString() ?? '—';
+
+  /// Format nullable double for display with decimal places
+  String _formatDouble(double? value, [int decimals = 1]) {
+    if (value == null) return '—';
+    return value.toStringAsFixed(decimals);
   }
 
   @override
@@ -90,6 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     lteSignal: _lteSignal,
                     piTemp: _piTemp,
                     voltage: _voltage,
+                    wsState: _wsState,
                   ),
 
                   const SizedBox(height: 10),
@@ -99,9 +173,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     flex: 8,
                     child: Row(
                       children: [
-                        // Speed - placeholder, will come from GPS
+                        // RPM from Arduino
                         StatBoxMain(
-                          value: _rpm.toString(),
+                          value: _formatInt(_rpm),
                           label: 'RPM',
                         ),
                         // Add second StatBoxMain here for 2-up layout:
@@ -116,9 +190,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        StatBox(value: _rpm.toString(), label: 'RPM'),
-                        StatBox(value: '$_engineTemp', unit: '°C', label: 'ENG'),
-                        const StatBox(value: '—', label: 'GEAR'),
+                        StatBox(value: _formatInt(_rpm), label: 'RPM'),
+                        StatBox(value: _formatInt(_engineTemp), unit: '°C', label: 'ENG'),
+                        StatBox(value: _formatGear(_gear), label: 'GEAR'),
                       ],
                     ),
                   ),

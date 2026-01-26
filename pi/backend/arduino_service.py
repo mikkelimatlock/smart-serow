@@ -25,6 +25,9 @@ class ArduinoService:
         "gear": re.compile(r"GEAR:\s*(\d+)", re.IGNORECASE),
     }
 
+    # ACK pattern: "ACK:CMD:STATUS" or "ACK:CMD:STATUS:extra"
+    ACK_PATTERN = re.compile(r"ACK:(\w+):(\w+)(?::(.*))?")
+
     def __init__(
         self,
         port: str = "/dev/ttyUSB0",
@@ -41,6 +44,55 @@ class ArduinoService:
         self._running = False
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
+
+        # Callbacks for push-based updates
+        self._on_data_callback = None
+        self._on_ack_callback = None
+
+        # Serial port handle for sending commands
+        self._serial: Any = None
+        self._serial_lock = threading.Lock()
+
+    def set_on_data(self, callback):
+        """Set callback for new telemetry data. Called with data dict."""
+        self._on_data_callback = callback
+
+    def set_on_ack(self, callback):
+        """Set callback for ACK responses. Called with (cmd, status, extra)."""
+        self._on_ack_callback = callback
+
+    def send_command(self, cmd: str, params: dict | None = None) -> bool:
+        """Send a command to Arduino via serial.
+
+        Format: "CMD:NAME:PARAM1:PARAM2..." followed by newline
+
+        Args:
+            cmd: Command name (e.g., "HORN", "LIGHT")
+            params: Optional parameters dict
+
+        Returns:
+            True if sent successfully, False if serial unavailable
+        """
+        with self._serial_lock:
+            if self._serial is None or not self._connected:
+                print(f"[Arduino] Cannot send command, not connected")
+                return False
+
+            try:
+                # Build command string
+                parts = ["CMD", cmd.upper()]
+                if params:
+                    for key, val in params.items():
+                        parts.append(f"{key}={val}")
+                line = ":".join(parts) + "\n"
+
+                self._serial.write(line.encode("utf-8"))
+                self._serial.flush()
+                print(f"[Arduino] Sent: {line.strip()}")
+                return True
+            except Exception as e:
+                print(f"[Arduino] Failed to send command: {e}")
+                return False
 
     @property
     def connected(self) -> bool:
@@ -100,6 +152,9 @@ class ArduinoService:
             return
 
         try:
+            # Store serial handle for send_command()
+            with self._serial_lock:
+                self._serial = ser
             self._connected = True
             print(f"[Arduino] Connected to {self.port} @ {self.baudrate} baud")
 
@@ -107,6 +162,14 @@ class ArduinoService:
                 try:
                     line = ser.readline().decode("utf-8", errors="ignore").strip()
                     if not line:
+                        continue
+
+                    # Check for ACK responses first
+                    ack_match = self.ACK_PATTERN.match(line)
+                    if ack_match:
+                        cmd, status, extra = ack_match.groups()
+                        if self._on_ack_callback:
+                            self._on_ack_callback(cmd, status, extra)
                         continue
 
                     data = self._parse_line(line)
@@ -120,12 +183,18 @@ class ArduinoService:
                             self._latest["time"] = data["time"]
                             self._buffer.append(self._latest.copy())
 
+                        # Invoke callback with new data
+                        if self._on_data_callback:
+                            self._on_data_callback(self._latest.copy())
+
                 except serial.SerialException as e:
                     print(f"[Arduino] Serial error: {e}")
                     break
 
         finally:
             self._connected = False
+            with self._serial_lock:
+                self._serial = None
             ser.close()
 
     def _parse_line(self, line: str) -> dict[str, Any] | None:
@@ -172,4 +241,9 @@ class ArduinoService:
             with self._lock:
                 self._latest = data
                 self._buffer.append(data)
+
+            # Invoke callback with new data
+            if self._on_data_callback:
+                self._on_data_callback(data)
+
             time.sleep(0.5)  # 2Hz stub updates

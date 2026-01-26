@@ -29,6 +29,13 @@ class GPSService:
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
+        # Callback for push-based updates
+        self._on_data_callback = None
+
+    def set_on_data(self, callback):
+        """Set callback for new GPS fix. Called with fix dict."""
+        self._on_data_callback = callback
+
     @property
     def connected(self) -> bool:
         return self._connected
@@ -75,7 +82,14 @@ class GPSService:
             self._stub_mode()
             return
 
-        with GPSDClient(host=self.host, port=self.port) as client:
+        try:
+            client = GPSDClient(host=self.host, port=self.port)
+        except Exception as e:
+            print(f"[GPS] Cannot connect to gpsd at {self.host}:{self.port}: {e}, falling back to stub mode")
+            self._stub_mode()
+            return
+
+        with client:
             self._connected = True
             print(f"[GPS] Connected to gpsd at {self.host}:{self.port}")
 
@@ -99,6 +113,10 @@ class GPSService:
                     if fix.get("lat") is not None:
                         self._buffer.append(fix)
 
+                # Invoke callback with new fix
+                if self._on_data_callback:
+                    self._on_data_callback(fix)
+
     def _stub_mode(self):
         """Fake data for testing without gpsd."""
         import random
@@ -117,4 +135,9 @@ class GPSService:
             with self._lock:
                 self._latest = fix
                 self._buffer.append(fix)
+
+            # Invoke callback with new fix
+            if self._on_data_callback:
+                self._on_data_callback(fix)
+
             time.sleep(1)

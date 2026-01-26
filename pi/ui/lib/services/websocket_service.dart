@@ -73,6 +73,11 @@ class WebSocketService {
   late StreamController<CommandAck> _ackController;
   late StreamController<BackendAlert> _alertController;
   late StreamController<WsConnectionState> _connectionController;
+  late StreamController<String> _debugController;
+
+  // Debug message buffer
+  static const int _maxDebugMessages = 50;
+  final List<String> _debugMessages = [];
 
   void _setupStreams() {
     _arduinoController = StreamController<ArduinoData>.broadcast();
@@ -81,6 +86,16 @@ class WebSocketService {
     _ackController = StreamController<CommandAck>.broadcast();
     _alertController = StreamController<BackendAlert>.broadcast();
     _connectionController = StreamController<WsConnectionState>.broadcast();
+    _debugController = StreamController<String>.broadcast();
+  }
+
+  /// Log a debug message (adds to buffer and stream)
+  void _log(String message) {
+    _debugMessages.add(message);
+    if (_debugMessages.length > _maxDebugMessages) {
+      _debugMessages.removeAt(0);
+    }
+    _debugController.add(message);
   }
 
   // --- Public API: Streams ---
@@ -102,6 +117,12 @@ class WebSocketService {
 
   /// Stream of connection state changes
   Stream<WsConnectionState> get connectionStream => _connectionController.stream;
+
+  /// Stream of debug log messages
+  Stream<String> get debugStream => _debugController.stream;
+
+  /// Current debug message buffer (for initial display)
+  List<String> get debugMessages => List.unmodifiable(_debugMessages);
 
   // --- Public API: Sync getters (backward compat) ---
 
@@ -135,25 +156,25 @@ class WebSocketService {
     });
 
     _socket!.onConnect((_) {
-      print('[WS] Connected to $_serverUrl');
+      _log('connected');
       _setConnectionState(WsConnectionState.connected);
       _cancelReconnect();
     });
 
     _socket!.onDisconnect((_) {
-      print('[WS] Disconnected');
+      _log('disconnected');
       _setConnectionState(WsConnectionState.disconnected);
       _scheduleReconnect();
     });
 
     _socket!.onConnectError((error) {
-      print('[WS] Connection error: $error');
+      _log('error: $error');
       _setConnectionState(WsConnectionState.disconnected);
       _scheduleReconnect();
     });
 
     _socket!.onError((error) {
-      print('[WS] Error: $error');
+      _log('error: $error');
     });
 
     // --- Telemetry Events ---
@@ -163,6 +184,7 @@ class WebSocketService {
         final arduino = ArduinoData.fromJson(data);
         _latestArduino = arduino;
         _arduinoController.add(arduino);
+        _log('ard: ${arduino.rpm ?? "-"}rpm ${arduino.voltage ?? "-"}V g${arduino.gear ?? "-"}');
       }
     });
 
@@ -171,6 +193,7 @@ class WebSocketService {
         final gps = GpsData.fromJson(data);
         _latestGps = gps;
         _gpsController.add(gps);
+        _log('gps: ${gps.speed?.toStringAsFixed(1) ?? "-"}m/s mode${gps.mode ?? "-"}');
       }
     });
 
@@ -182,6 +205,7 @@ class WebSocketService {
         );
         _latestStatus = status;
         _statusController.add(status);
+        _log('status: gps=${status.gpsConnected} ard=${status.arduinoConnected}');
       }
     });
 
@@ -196,6 +220,7 @@ class WebSocketService {
           extra: data['extra'],
         );
         _ackController.add(ack);
+        _log('ack: ${ack.id}=${ack.status}${ack.error != null ? " err:${ack.error}" : ""}');
       }
     });
 
@@ -206,6 +231,7 @@ class WebSocketService {
           message: data['message'] ?? '',
         );
         _alertController.add(alert);
+        _log('alert: [${alert.type}] ${alert.message}');
       }
     });
 
@@ -283,5 +309,6 @@ class WebSocketService {
     _ackController.close();
     _alertController.close();
     _connectionController.close();
+    _debugController.close();
   }
 }

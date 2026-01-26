@@ -9,6 +9,7 @@ import '../widgets/navigator_widget.dart';
 import '../widgets/stat_box.dart';
 import '../widgets/stat_box_main.dart';
 import '../widgets/system_bar.dart';
+import '../widgets/debug_console.dart';
 
 // test service for triggers
 import '../services/test_flipflop_service.dart';
@@ -202,11 +203,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(width: 32),
 
-            // Right side: Image display (flex: 1)
+            // Right side: Navigator with debug console overlay
             Expanded(
               flex: 1,
-              child: Center(
-                child: NavigatorWidget(key: _navigatorKey),
+              child: Stack(
+                children: [
+                  // Bottom layer: Navigator
+                  Center(
+                    child: NavigatorWidget(key: _navigatorKey),
+                  ),
+                  // Top layer: Debug console on lower half only
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Spacer(), // Top half - empty
+                      const Expanded(
+                        child: DebugConsole(maxLines: 8),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

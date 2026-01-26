@@ -46,6 +46,7 @@ pi/ui/test/
 pi/ui/.metadata
 pi/ui/README.md
 pi/ui/analysis_options.yaml
+pi/ui/pubspec.lock
 
 # Pi (aarch64) dynamic linkers and stuff
 pi_sysroot/

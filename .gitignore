@@ -60,6 +60,12 @@ scripts/__pycache__/
 scripts/*.pyc
 scripts/*.pyo
 
+# Python artifacts
+*.pyc
+*.pyo
+__pycache__/
+
+
 # extra resources
 extra/fonts/
 extra/images/

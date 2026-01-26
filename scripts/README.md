@@ -42,19 +42,19 @@ Called automatically by `build.py`. Looks for theme matching `navigator` in `con
 
 | Script | Purpose |
 |--------|---------|
-| `pi_setup.sh` | First-time Pi config (deps, permissions, UI systemd service) |
+| `pi_setup.sh` | First-time Pi config for UI (deps, permissions, systemd) |
+| `pi_setup_backend.sh` | First-time Pi config for backend (uv, gpsd, systemd) |
 | `smartserow-ui.service.sample` | UI systemd unit template |
 | `smartserow-backend.service.sample` | Backend systemd unit template |
 
 ```bash
-# On the Pi (UI)
+# On the Pi - UI setup
 chmod +x pi_setup.sh
 ./pi_setup.sh
 
-# Backend service (manual for now)
-sudo cp smartserow-backend.service.sample /etc/systemd/system/smartserow-backend.service
-sudo systemctl daemon-reload
-sudo systemctl enable smartserow-backend
+# On the Pi - Backend setup (independent)
+chmod +x pi_setup_backend.sh
+./pi_setup_backend.sh
 ```
 
 ## Configuration

@@ -30,7 +30,7 @@ class TestFlipFlopService {
 
     _timer = Timer.periodic(const Duration(seconds: 2), (_) {
       // Toggle theme
-      ThemeService.instance.toggle();
+      // ThemeService.instance.toggle();
 
       // Surprise the navigator
       if (navigatorKey.currentState?.emotion == 'surprise') {

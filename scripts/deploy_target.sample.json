@@ -1,7 +1,13 @@
 {
   "user": "pi",
   "host": "raspberrypi.local",
+
+  "_comment_ui": "Flutter UI settings (deploy.py)",
   "remote_path": "/opt/smartserow",
   "service_name": "smartserow-ui",
-  "assets_path": "~/smartserow-ui/assets"
+  "assets_path": "~/smartserow-ui/assets",
+
+  "_comment_backend": "Python backend settings (deploy_backend.py)",
+  "backend_path": "/opt/smartserow-backend",
+  "backend_service": "smartserow-backend"
 }

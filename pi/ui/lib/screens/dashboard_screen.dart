@@ -76,21 +76,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        'CHASSIS VOLTAGE ',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 80,
-                          color: theme.subdued,
-                          letterSpacing: 1,
+                      Expanded(
+                        flex: 3,
+                        child: Container(),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Chassis voltage ',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 60,
+                            color: theme.subdued,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
-                      Text(
-                        '${_voltage.toStringAsFixed(1)}V',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 80,
-                          color: _voltage < 11.9 ? theme.highlight : theme.foreground,
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          '${_voltage.toStringAsFixed(1)}V',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 80,
+                            color: _voltage < 11.9 ? theme.highlight : theme.foreground,
+                          ),
                         ),
-                      ),
+                      )
                     ],
                   ),
 
@@ -125,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Bottom stats row
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       StatBox(label: 'RPM', value: _rpm.toString()),
                       StatBox(label: 'ENG', value: '$_temp°C'),

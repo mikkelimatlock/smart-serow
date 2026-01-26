@@ -13,24 +13,27 @@ class StatBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = AppTheme.of(context);
 
-    return Column(
-      children: [
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontSize: 100,
-            color: theme.foreground,
+    return Expanded(
+      flex: 1,
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: 100,
+              color: theme.foreground,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontSize: 80,
-            color: theme.subdued,
-            letterSpacing: 1,
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 80,
+              color: theme.subdued,
+              letterSpacing: 1,
+            ),
           ),
-        ),
-      ],
+        ],
+      )
     );
   }
 }

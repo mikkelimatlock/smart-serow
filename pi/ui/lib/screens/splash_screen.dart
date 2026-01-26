@@ -20,13 +20,15 @@ class SplashScreen extends StatelessWidget {
           children: [
             Icon(
               Icons.terrain,
-              size: 120,
+              size: 240,
               color: theme.subdued,
+              // replace with custom logo later
             ),
             const SizedBox(height: 24),
             Text(
               'Smart Serow',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                fontSize: 160,
                 color: theme.foreground,
                 fontWeight: FontWeight.bold,
               ),
@@ -35,6 +37,7 @@ class SplashScreen extends StatelessWidget {
             Text(
               status,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 80,
                 color: theme.subdued,
               ),
             ),

@@ -229,15 +229,21 @@ class ArduinoService:
         """Fake data for testing without Arduino connected."""
         import random
 
+        _rpm = 3000
+
         while self._running:
             self._connected = True
             data = {
                 "time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "voltage": round(12.0 + random.uniform(-0.5, 0.8), 2),
-                "rpm": random.randint(800, 6000) if random.random() > 0.3 else None,
+                "rpm": _rpm if random.random() > 0.1 else None,
                 "eng_temp": random.randint(60, 95),
                 "gear": random.randint(1, 6) if random.random() > 0.2 else 0,  # 0 = neutral
             }
+            _rpm += 10
+            if _rpm > 7500:
+                _rpm = 500
+
             with self._lock:
                 self._latest = data
                 self._buffer.append(data)

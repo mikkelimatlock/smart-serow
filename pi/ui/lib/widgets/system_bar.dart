@@ -104,7 +104,7 @@ class SystemBar extends StatelessWidget {
                   theme: theme,
                 ),
                 _Indicator(
-                  label: 'Chassis',
+                  label: 'Mains',
                   value: voltage != null ? '${voltage!.toStringAsFixed(1)} V' : 'N/A',
                   isAbnormal: voltage == null || voltage! < 11.9,
                   alignment: Alignment.centerLeft,

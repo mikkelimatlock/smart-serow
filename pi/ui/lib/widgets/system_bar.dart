@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../services/websocket_service.dart';
 import '../theme/app_theme.dart';
 
 /// Android-style persistent status bar for system indicators.
-/// Shows GPS satellites, LTE signal, Pi temp, voltage at a glance.
+/// Shows GPS satellites, LTE signal, Pi temp, voltage, WS status at a glance.
 class SystemBar extends StatelessWidget {
   final int? gpsSatellites; // null = disconnected
   final int? lteSignal; // null = disconnected, 0-4 bars
   final double? piTemp; // null = unavailable
   final double? voltage; // null = Arduino disconnected
+  final WsConnectionState? wsState; // WebSocket connection state
 
   const SystemBar({
     super.key,
@@ -16,11 +18,26 @@ class SystemBar extends StatelessWidget {
     this.lteSignal,
     this.piTemp,
     this.voltage,
+    this.wsState,
   });
+
+  /// Get WebSocket status text and abnormal flag
+  (String, bool) _wsStatus() {
+    switch (wsState) {
+      case WsConnectionState.connected:
+        return ('OK', false);
+      case WsConnectionState.connecting:
+        return ('...', true);
+      case WsConnectionState.disconnected:
+      case null:
+        return ('OFF', true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = AppTheme.of(context);
+    final (wsText, wsAbnormal) = _wsStatus();
 
     return Expanded(
       flex: 1,
@@ -43,7 +60,17 @@ class SystemBar extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Left group: GPS, LTE
+                // Left group: WS, GPS, LTE
+                _Indicator(
+                  label: 'WS',
+                  value: wsText,
+                  isAbnormal: wsAbnormal,
+                  alignment: Alignment.centerLeft,
+                  labelSize: labelSize,
+                  valueSize: valueSize,
+                  flex: 2,
+                  theme: theme,
+                ),
                 _Indicator(
                   label: 'GPS',
                   value: gpsSatellites?.toString() ?? 'N/A',
@@ -70,7 +97,7 @@ class SystemBar extends StatelessWidget {
                   label: 'Pi',
                   value: piTemp != null ? '${piTemp!.toStringAsFixed(1)} °C' : 'N/A',
                   isAbnormal: piTemp == null || piTemp! > 80,
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   labelSize: labelSize,
                   valueSize: valueSize,
                   flex: 2,
@@ -80,7 +107,7 @@ class SystemBar extends StatelessWidget {
                   label: 'Chassis',
                   value: voltage != null ? '${voltage!.toStringAsFixed(1)} V' : 'N/A',
                   isAbnormal: voltage == null || voltage! < 11.9,
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   labelSize: labelSize,
                   valueSize: valueSize,
                   flex: 3,

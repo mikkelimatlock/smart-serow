@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from build import build
 from deploy import deploy
+from deploy_backend import deploy as deploy_backend
 
 
 def main():
@@ -39,21 +40,44 @@ def main():
         action="store_true",
         help="Only deploy, don't build",
     )
+    parser.add_argument(
+        "--ui",
+        action="store_true",
+        help="Build/deploy UI only (no backend)",
+    )
+    parser.add_argument(
+        "--backend",
+        action="store_true",
+        help="Deploy backend only (no UI, no build)",
+    )
     args = parser.parse_args()
 
-    # Build
-    if not args.deploy_only:
+    # Default: both UI and backend if neither flag specified
+    do_ui = args.ui or not args.backend
+    do_backend = args.backend or not args.ui
+
+    restart = not args.no_restart
+
+    # Build UI (only if doing UI and not deploy-only)
+    if do_ui and not args.deploy_only:
         print()
         if not build(clean=args.clean):
-            print("Build failed!")
+            print("UI build failed!")
             sys.exit(1)
 
-    # Deploy
-    if not args.build_only:
+    # Deploy backend FIRST (no build step needed - it's Python)
+    # Backend must be up before UI connects to WebSocket
+    if do_backend and not args.build_only:
         print()
-        restart = not args.no_restart
+        if not deploy_backend(restart=restart):
+            print("Backend deploy failed!")
+            sys.exit(1)
+
+    # Deploy UI after backend is ready
+    if do_ui and not args.build_only:
+        print()
         if not deploy(restart=restart):
-            print("Deploy failed!")
+            print("UI deploy failed!")
             sys.exit(1)
 
     print()

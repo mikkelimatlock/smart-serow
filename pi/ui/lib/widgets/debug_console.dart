@@ -1,17 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../services/websocket_service.dart';
 import '../theme/app_theme.dart';
 
-/// Self-contained debug console that displays WebSocket log messages.
-/// Subscribes to WebSocketService.debugStream internally.
+/// Generic debug console that displays streaming log messages.
+///
+/// Can be wired to any message source via [messageStream] and [initialMessages].
+/// Example sources: WebSocketService.debugStream, ArduinoService logs, etc.
 class DebugConsole extends StatefulWidget {
+  /// Stream of new messages to display
+  final Stream<String> messageStream;
+
+  /// Initial messages to populate (e.g., from a buffer)
+  final List<String> initialMessages;
+
   /// Maximum lines to display
   final int maxLines;
 
   const DebugConsole({
     super.key,
+    required this.messageStream,
+    this.initialMessages = const [],
     this.maxLines = 8,
   });
 
@@ -21,18 +30,18 @@ class DebugConsole extends StatefulWidget {
 
 class _DebugConsoleState extends State<DebugConsole> {
   final List<String> _messages = [];
-  StreamSubscription<String>? _debugSub;
+  StreamSubscription<String>? _sub;
 
   @override
   void initState() {
     super.initState();
 
     // Initialize with existing buffer
-    _messages.addAll(WebSocketService.instance.debugMessages);
+    _messages.addAll(widget.initialMessages);
     _trimMessages();
 
     // Subscribe to new messages
-    _debugSub = WebSocketService.instance.debugStream.listen((msg) {
+    _sub = widget.messageStream.listen((msg) {
       setState(() {
         _messages.add(msg);
         _trimMessages();
@@ -48,7 +57,7 @@ class _DebugConsoleState extends State<DebugConsole> {
 
   @override
   void dispose() {
-    _debugSub?.cancel();
+    _sub?.cancel();
     super.dispose();
   }
 

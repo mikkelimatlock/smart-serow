@@ -217,8 +217,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       const Spacer(), // Top half - empty
-                      const Expanded(
-                        child: DebugConsole(maxLines: 8),
+                      Expanded(
+                        child: DebugConsole(
+                          messageStream: WebSocketService.instance.debugStream,
+                          initialMessages: WebSocketService.instance.debugMessages,
+                          maxLines: 8,
+                        ),
                       ),
                     ],
                   ),

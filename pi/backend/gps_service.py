@@ -30,9 +30,9 @@ class GPSService:
         self._lock = threading.Lock()
 
         # Callback for push-based updates
-        self._on_data_callback: callable | None = None
+        self._on_data_callback = None
 
-    def set_on_data(self, callback: callable | None):
+    def set_on_data(self, callback):
         """Set callback for new GPS fix. Called with fix dict."""
         self._on_data_callback = callback
 

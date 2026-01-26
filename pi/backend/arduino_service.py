@@ -46,18 +46,18 @@ class ArduinoService:
         self._lock = threading.Lock()
 
         # Callbacks for push-based updates
-        self._on_data_callback: callable | None = None
-        self._on_ack_callback: callable | None = None
+        self._on_data_callback = None
+        self._on_ack_callback = None
 
         # Serial port handle for sending commands
         self._serial: Any = None
         self._serial_lock = threading.Lock()
 
-    def set_on_data(self, callback: callable | None):
+    def set_on_data(self, callback):
         """Set callback for new telemetry data. Called with data dict."""
         self._on_data_callback = callback
 
-    def set_on_ack(self, callback: callable | None):
+    def set_on_ack(self, callback):
         """Set callback for ACK responses. Called with (cmd, status, extra)."""
         self._on_ack_callback = callback
 

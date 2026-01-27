@@ -17,11 +17,15 @@ class DebugConsole extends StatefulWidget {
   /// Maximum lines to display
   final int maxLines;
 
+  /// Optional title for the console (shown in title bar)
+  final String? title;
+
   const DebugConsole({
     super.key,
     required this.messageStream,
     this.initialMessages = const [],
     this.maxLines = 8,
+    this.title,
   });
 
   @override
@@ -66,15 +70,49 @@ class _DebugConsoleState extends State<DebugConsole> {
     final theme = AppTheme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(4),
-      child: Text(
-        _messages.isEmpty ? '(no messages)' : _messages.join('\n'),
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 34,
-          color: theme.foreground,
-          height: 1.2,
-        ),
+      decoration: BoxDecoration(
+        color: theme.background.withAlpha(64),
+        border: Border.all(color: theme.subdued, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Title bar (optional)
+          if (widget.title != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: theme.subdued, width: 1),
+                ),
+              ),
+              child: Text(
+                widget.title!,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 24,
+                  color: theme.subdued,
+                ),
+              ),
+            ),
+          // Console content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                _messages.isEmpty ? '(no messages)' : _messages.join('\n'),
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 30,
+                  color: theme.foreground,
+                  height: 1.0,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

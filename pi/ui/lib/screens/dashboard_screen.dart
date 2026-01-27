@@ -167,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     wsState: _wsState,
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
 
                   // Main content area - big stat boxes
                   Expanded(
@@ -203,28 +203,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(width: 32),
 
-            // Right side: Navigator with debug console overlay
+            // Right side: Navigator on top, debug console below
             Expanded(
               flex: 1,
-              child: Stack(
+              child: Column(
                 children: [
-                  // Bottom layer: Navigator
-                  Center(
-                    child: NavigatorWidget(key: _navigatorKey),
+                  // Navigator
+                  Expanded(
+                    flex: 3,
+                    child: Center(
+                      child: NavigatorWidget(key: _navigatorKey),
+                    ),
                   ),
-                  // Top layer: Debug console on lower half only
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Spacer(), // Top half - empty
-                      Expanded(
-                        child: DebugConsole(
-                          messageStream: WebSocketService.instance.debugStream,
-                          initialMessages: WebSocketService.instance.debugMessages,
-                          maxLines: 8,
-                        ),
-                      ),
-                    ],
+                  // Debug console
+                  Expanded(
+                    flex: 1,
+                    child: 
+                    DebugConsole(
+                      messageStream: WebSocketService.instance.debugStream,
+                      initialMessages: WebSocketService.instance.debugMessages,
+                      maxLines: 6,
+                      title: 'WebSocket messages',
+                    ),
                   ),
                 ],
               ),

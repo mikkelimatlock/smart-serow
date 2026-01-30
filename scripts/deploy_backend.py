@@ -17,6 +17,7 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 PROJECT_ROOT = SCRIPT_DIR.parent
 CONFIG_FILE = SCRIPT_DIR / "deploy_target.json"
 BACKEND_DIR = PROJECT_ROOT / "pi" / "backend"
+SERVICE_FILE = SCRIPT_DIR / "smartserow-backend.service"
 
 
 def run(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedProcess:
@@ -72,6 +73,7 @@ def deploy(restart: bool = False) -> bool:
         "--exclude", "*.pyc",
         "--exclude", ".venv",
         "--exclude", ".ruff_cache",
+        "--exclude", "uv.lock",  # Let Pi generate its own lockfile
         f"{BACKEND_DIR}/",
         f"{ssh_target}:{remote_path}/",
     ])
@@ -87,6 +89,16 @@ def deploy(restart: bool = False) -> bool:
     if result.returncode != 0:
         print("WARNING: uv sync failed - dependencies may be out of date")
         print("Make sure uv is installed on Pi: curl -LsSf https://astral.sh/uv/install.sh | sh")
+
+    # Deploy service file if it exists
+    if SERVICE_FILE.exists():
+        print()
+        print("Deploying systemd service file...")
+        run(["scp", str(SERVICE_FILE), f"{ssh_target}:/tmp/"])
+        run([
+            "ssh", ssh_target,
+            f"sudo mv /tmp/{SERVICE_FILE.name} /etc/systemd/system/ && sudo systemctl daemon-reload"
+        ])
 
     # Restart service if requested
     if restart:

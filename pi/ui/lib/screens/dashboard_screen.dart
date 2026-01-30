@@ -191,8 +191,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        StatBox(value: _formatInt(_rpm), label: 'RPM'),
-                        StatBox(value: _formatInt(_engineTemp), unit: '°C', label: 'ENG'),
+                        StatBox(value: _formatInt(_rpm), label: 'RPM', isWarning: () => (_rpm ?? 0) > 4000),
+                        StatBox(value: _formatInt(_engineTemp), unit: '°C', label: 'ENG', isWarning: () => (_engineTemp ?? 0) > 120),
                         StatBox(value: _formatGear(_gear), label: 'GEAR'),
                       ],
                     ),

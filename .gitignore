@@ -65,6 +65,8 @@ scripts/*.pyo
 *.pyc
 *.pyo
 __pycache__/
+.venv/
+uv.lock
 
 
 # extra resources

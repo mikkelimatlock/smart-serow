@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/config_service.dart';
 
@@ -18,14 +19,34 @@ class NavigatorWidget extends StatefulWidget {
   State<NavigatorWidget> createState() => NavigatorWidgetState();
 }
 
-class NavigatorWidgetState extends State<NavigatorWidget> {
+class NavigatorWidgetState extends State<NavigatorWidget>
+    with SingleTickerProviderStateMixin {
   String _emotion = 'default';
+  late AnimationController _shakeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    super.dispose();
+  }
 
   /// Change the displayed emotion.
   /// Image file must exist at: {assetsPath}/navigator/{navigator}/{emotion}.png
   void setEmotion(String emotion) {
     if (emotion != _emotion) {
       setState(() => _emotion = emotion);
+      if (emotion == 'surprise') {
+        _shakeController.forward(from: 0);
+      }
     }
   }
 
@@ -40,7 +61,7 @@ class NavigatorWidgetState extends State<NavigatorWidget> {
     final config = ConfigService.instance;
     final basePath = '${config.assetsPath}/navigator/${config.navigator}';
 
-    return Image.file(
+    final image = Image.file(
       File('$basePath/$_emotion.png'),
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {
@@ -53,6 +74,20 @@ class NavigatorWidgetState extends State<NavigatorWidget> {
           );
         }
         return const SizedBox.shrink();
+      },
+    );
+
+    // Shake animation for surprise
+    return AnimatedBuilder(
+      animation: _shakeController,
+      child: image,
+      builder: (context, child) {
+        final shake = sin(_shakeController.value * pi * 6) * 10 *
+            (1 - _shakeController.value); // 6 oscillations, 4px amplitude, decay
+        return Transform.translate(
+          offset: Offset(shake, 0),
+          child: child,
+        );
       },
     );
   }

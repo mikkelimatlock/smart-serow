@@ -9,17 +9,23 @@ class StatBox extends StatelessWidget {
   final String label;
   final int flex;
 
+  /// Optional warning predicate - if returns true, value shows in highlight color
+  final bool Function()? isWarning;
+
   const StatBox({
     super.key,
     required this.value,
     this.unit,
     required this.label,
     this.flex = 1,
+    this.isWarning,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = AppTheme.of(context);
+    final warning = isWarning?.call() ?? false;
+    final valueColor = warning ? theme.highlight : theme.foreground;
 
     return Expanded(
       flex: flex,
@@ -42,7 +48,7 @@ class StatBox extends StatelessWidget {
                       fontSize: baseSize,
                       fontWeight: FontWeight.w400,
                       fontFeatures: const [FontFeature.tabularFigures()],
-                      color: theme.foreground,
+                      color: valueColor,
                       height: 1,
                     ),
                   ),

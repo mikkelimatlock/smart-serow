@@ -15,6 +15,14 @@ void setup() {
   voltage_init();
   imu_init();      // AltSoftSerial on pins 8(RX)/9(TX)
   comms_init();    // Hardware Serial to Pi at 115200
+
+  // Let IMU warm up a bit before calibrating
+  // (WT61 needs a moment to stabilize after power-on)
+  delay(500);
+
+  // Zero calibration - current position becomes reference
+  // Blocks for ~250ms while sampling
+  imu_calibrate();
 }
 
 void loop() {
@@ -71,8 +79,5 @@ void sendTelemetry() {
     comms_send("Yaw", imu.yaw);
   } else {
     comms_send("IMU", "STALE");
-
-    // flip LED to indicate main cycle
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   }
 }

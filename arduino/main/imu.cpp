@@ -2,7 +2,7 @@
 #include <AltSoftSerial.h>
 
 // AltSoftSerial uses fixed pins on ATmega328P:
-// RX = Pin 8, TX = Pin 9 (TX not used for WT61)
+// RX = Pin 8, TX = Pin 9
 static AltSoftSerial imuSerial;
 
 // WT61 packet structure:
@@ -22,6 +22,10 @@ static int rxIndex = 0;
 
 // Latest data
 static ImuData currentData = {0};
+
+// Calibration offsets and state
+static ImuData offsets = {0};
+static bool calibrated = false;
 
 // Scale factors from WT61 datasheet
 // Accel: raw / 32768 * 16g
@@ -75,7 +79,19 @@ static void processPacket() {
 }
 
 void imu_init() {
-  imuSerial.begin(9600);
+  // Send config at factory baud rate (115200)
+  // Sets WT61 to 9600/20Hz - see IMU.md for command reference
+  // Idempotent: if already at 9600, command is garbled and ignored
+  imuSerial.begin(115200);
+
+  /* uncomment after I wire up Nano D9 -> WT61 RX*/
+  // imu_send_cmd(0x64);  // 9600 baud / 20Hz
+  // delay(100);          // Let WT61 process and restart
+
+  // Switch to working baud rate
+  // imuSerial.begin(9600);
+  /* uncomment after I wire up Nano D9 -> WT61 RX*/
+
   rxIndex = 0;
   currentData = {0};
 }
@@ -107,9 +123,83 @@ bool imu_update() {
 }
 
 const ImuData& imu_get_data() {
+  // Apply calibration offsets if calibrated
+  // Using a static to avoid creating new struct each call
+  static ImuData calibratedData;
+
+  if (calibrated) {
+    calibratedData.ax = currentData.ax - offsets.ax;
+    calibratedData.ay = currentData.ay - offsets.ay;
+    calibratedData.az = currentData.az - offsets.az;
+    calibratedData.gx = currentData.gx - offsets.gx;
+    calibratedData.gy = currentData.gy - offsets.gy;
+    calibratedData.gz = currentData.gz - offsets.gz;
+    calibratedData.roll = currentData.roll - offsets.roll;
+    calibratedData.pitch = currentData.pitch - offsets.pitch;
+    calibratedData.yaw = currentData.yaw - offsets.yaw;
+    calibratedData.lastUpdate = currentData.lastUpdate;
+    return calibratedData;
+  }
+
   return currentData;
 }
 
 bool imu_is_fresh(unsigned long timeout_ms) {
   return (millis() - currentData.lastUpdate) < timeout_ms;
+}
+
+void imu_calibrate() {
+  const int SAMPLES = 5;  // ~250ms at 20Hz IMU rate
+
+  // Accumulators for averaging
+  float sum_ax = 0, sum_ay = 0, sum_az = 0;
+  float sum_gx = 0, sum_gy = 0, sum_gz = 0;
+  float sum_roll = 0, sum_pitch = 0, sum_yaw = 0;
+
+  int count = 0;
+  unsigned long lastUpdate = currentData.lastUpdate;
+
+  // Block until we've collected enough samples
+  while (count < SAMPLES) {
+    imu_update();
+
+    if (currentData.lastUpdate != lastUpdate) {
+      // New angle packet arrived (lastUpdate only changes on angle packets)
+      sum_ax += currentData.ax;
+      sum_ay += currentData.ay;
+      sum_az += currentData.az;
+      sum_gx += currentData.gx;
+      sum_gy += currentData.gy;
+      sum_gz += currentData.gz;
+      sum_roll += currentData.roll;
+      sum_pitch += currentData.pitch;
+      sum_yaw += currentData.yaw;
+
+      lastUpdate = currentData.lastUpdate;
+      count++;
+    }
+  }
+
+  // Store averaged offsets
+  offsets.ax = sum_ax / SAMPLES;
+  offsets.ay = sum_ay / SAMPLES;
+  offsets.az = sum_az / SAMPLES;
+  offsets.gx = sum_gx / SAMPLES;
+  offsets.gy = sum_gy / SAMPLES;
+  offsets.gz = sum_gz / SAMPLES;
+  offsets.roll = sum_roll / SAMPLES;
+  offsets.pitch = sum_pitch / SAMPLES;
+  offsets.yaw = sum_yaw / SAMPLES;
+
+  calibrated = true;
+}
+
+bool imu_is_calibrated() {
+  return calibrated;
+}
+
+void imu_send_cmd(uint8_t cmd) {
+  const uint8_t packet[] = {0xFF, 0xAA, cmd};
+  imuSerial.write(packet, 3);
+  imuSerial.flush();
 }

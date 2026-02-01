@@ -12,17 +12,24 @@ static unsigned long lastTelemetryTime = 0;
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
+  comms_init();    // Hardware Serial first so we can debug
+  Serial.println(F("[INIT] comms ok"));
+
   voltage_init();
+  Serial.println(F("[INIT] voltage ok"));
+
   imu_init();      // AltSoftSerial on pins 8(RX)/9(TX)
-  comms_init();    // Hardware Serial to Pi at 115200
+  Serial.println(F("[INIT] imu ok"));
 
   // Let IMU warm up a bit before calibrating
   // (WT61 needs a moment to stabilize after power-on)
   delay(500);
 
+  Serial.println(F("[INIT] calibrating..."));
   // Zero calibration - current position becomes reference
   // Blocks for ~250ms while sampling
   imu_calibrate();
+  Serial.println(F("[INIT] calibration done, entering loop"));
 }
 
 void loop() {

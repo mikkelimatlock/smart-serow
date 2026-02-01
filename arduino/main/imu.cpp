@@ -83,15 +83,11 @@ void imu_init() {
   // Sets WT61 to 9600/20Hz - see IMU.md for command reference
   // Idempotent: if already at 9600, command is garbled and ignored
   imuSerial.begin(115200);
-
-  /* uncomment after I wire up Nano D9 -> WT61 RX*/
-  // imu_send_cmd(0x64);  // 9600 baud / 20Hz
-  // delay(100);          // Let WT61 process and restart
+  imu_send_cmd(0x64);  // 9600 baud / 20Hz
+  delay(100);          // Let WT61 process and restart
 
   // Switch to working baud rate
-  // imuSerial.begin(9600);
-  /* uncomment after I wire up Nano D9 -> WT61 RX*/
-
+  imuSerial.begin(9600);
   rxIndex = 0;
   currentData = {0};
 }

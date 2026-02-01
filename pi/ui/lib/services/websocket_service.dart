@@ -184,7 +184,10 @@ class WebSocketService {
         final arduino = ArduinoData.fromJson(data);
         _latestArduino = arduino;
         _arduinoController.add(arduino);
-        _log('ard: ${arduino.rpm ?? "-"}rpm ${arduino.voltage ?? "-"}V g${arduino.gear ?? "-"}');
+        final rollStr = arduino.roll != null ? 'r${arduino.roll!.round()}' : '';
+        final pitchStr = arduino.pitch != null ? 'p${arduino.pitch!.round()}' : '';
+        final imuStr = (rollStr.isNotEmpty || pitchStr.isNotEmpty) ? ' $rollStr$pitchStr' : '';
+        _log('ard: ${arduino.rpm ?? "-"}rpm ${arduino.voltage ?? "-"}V g${arduino.gear ?? "-"}$imuStr');
       }
     });
 

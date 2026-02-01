@@ -2,14 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Data from Arduino (voltage, rpm, engine temp, gear)
+/// Data from Arduino (voltage, rpm, engine temp, gear, IMU)
 class ArduinoData {
   final double? voltage;
   final int? rpm;
   final int? engTemp;
   final int? gear; // 0 = neutral, 1-6 = gear
+  final double? roll;  // Euler angle in degrees (negative = left, positive = right)
+  final double? pitch; // Euler angle in degrees (negative = nose down)
 
-  ArduinoData({this.voltage, this.rpm, this.engTemp, this.gear});
+  ArduinoData({this.voltage, this.rpm, this.engTemp, this.gear, this.roll, this.pitch});
 
   factory ArduinoData.fromJson(Map<String, dynamic> json) {
     return ArduinoData(
@@ -17,6 +19,8 @@ class ArduinoData {
       rpm: (json['rpm'] as num?)?.toInt(),
       engTemp: (json['eng_temp'] as num?)?.toInt(),
       gear: (json['gear'] as num?)?.toInt(),
+      roll: (json['roll'] as num?)?.toDouble(),  // IMU mounted with axes swapped
+      pitch: (json['pitch'] as num?)?.toDouble(),
     );
   }
 }

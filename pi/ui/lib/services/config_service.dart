@@ -86,4 +86,11 @@ class ConfigService {
     if (value is String && value.isNotEmpty) return value;
     return _defaultNavigator;
   }
+
+  /// Backend URL for API calls
+  String get backendUrl {
+    final value = _config?['backend_url'];
+    if (value is String && value.isNotEmpty) return value;
+    return 'http://127.0.0.1:5000';
+  }
 }

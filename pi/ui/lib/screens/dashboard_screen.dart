@@ -10,6 +10,7 @@ import '../widgets/stat_box.dart';
 import '../widgets/stat_box_main.dart';
 import '../widgets/system_bar.dart';
 import '../widgets/debug_console.dart';
+import '../widgets/whiskey_mark.dart';
 
 // test service for triggers
 import '../services/test_flipflop_service.dart';
@@ -41,6 +42,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? _voltage;
   int? _engineTemp;
   int? _gear;
+  double? _roll;
+  double? _pitch;
 
   // From backend - GPS data
   double? _gpsSpeed;
@@ -66,6 +69,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _rpm = data.rpm;
         _engineTemp = data.engTemp;
         _gear = data.gear;
+        _roll = data.roll;
+        _pitch = data.pitch;
       });
     });
 
@@ -99,6 +104,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _rpm = cachedArduino.rpm;
       _engineTemp = cachedArduino.engTemp;
       _gear = cachedArduino.gear;
+      _roll = cachedArduino.roll;
+      _pitch = cachedArduino.pitch;
     }
 
     final cachedGps = WebSocketService.instance.latestGps;
@@ -175,12 +182,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Row(
                       children: [
                         // RPM from Arduino
-                        StatBoxMain(
-                          value: _formatInt(_rpm),
-                          label: 'RPM',
+                        // StatBoxMain(
+                        //   value: _formatInt(_rpm),
+                        //   label: 'RPM',
+                        // ),
+                        // Attitude indicator (whiskey mark)
+                        Expanded(
+                          child: WhiskeyMark(
+                            roll: _roll,
+                            pitch: _pitch,
+                          ),
                         ),
-                        // Add second StatBoxMain here for 2-up layout:
-                        // StatBoxMain(value: '4500', unit: 'rpm', label: 'TACH'),
                       ],
                     ),
                   ),

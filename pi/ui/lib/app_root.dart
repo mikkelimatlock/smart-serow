@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import 'screens/splash_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -36,14 +38,12 @@ class _AppRootState extends State<AppRoot> {
     setState(() => _initStatus = 'Loading config...');
     await ConfigService.instance.load();
 
-    // Simulate init checks - replace with real checks later
-    // (UART, GPS, sensors, etc.)
-
     setState(() => _initStatus = 'Checking systems...');
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    setState(() => _initStatus = 'UART: standby');
-    await Future.delayed(const Duration(milliseconds: 400));
+    // Check UART connection via backend health endpoint
+    setState(() => _initStatus = 'UART: connecting...');
+    await _waitForUart();
 
     setState(() => _initStatus = 'GPS: standby');
     await Future.delayed(const Duration(milliseconds: 400));
@@ -59,6 +59,42 @@ class _AppRootState extends State<AppRoot> {
     );
 
     setState(() => _initialized = true);
+  }
+
+  /// Poll backend health endpoint until Arduino is connected
+  Future<void> _waitForUart() async {
+    final backendUrl = ConfigService.instance.backendUrl;
+    const maxAttempts = 30; // ~30 seconds max wait
+    const retryDelay = Duration(seconds: 1);
+
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        final response = await http
+            .get(Uri.parse('$backendUrl/health'))
+            .timeout(const Duration(seconds: 2));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final arduinoOk = data['arduino_connected'] == true;
+
+          if (arduinoOk) {
+            setState(() => _initStatus = 'UART: OK');
+            await Future.delayed(const Duration(milliseconds: 300));
+            return;
+          }
+        }
+      } catch (e) {
+        // Backend not reachable yet - keep trying
+      }
+
+      // Not connected yet
+      setState(() => _initStatus = 'UART: waiting...');
+      await Future.delayed(retryDelay);
+    }
+
+    // Timeout - proceed anyway (UI will show stale data indicators)
+    setState(() => _initStatus = 'UART: timeout');
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   @override

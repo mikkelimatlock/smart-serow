@@ -1,6 +1,7 @@
 """Arduino service - connects to Arduino Nano via serial, buffers telemetry."""
 
 import json
+import math
 import re
 import threading
 import time
@@ -17,7 +18,10 @@ except ImportError:
 class ArduinoService:
     """Threaded Arduino serial reader with buffering and auto-reconnect."""
 
-    # Regex patterns for legacy text protocol
+    # TSV field names (order per PROTOCOL.md)
+    TSV_FIELDS = ['voltage', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'roll', 'pitch', 'yaw', 'rpm', 'gear']
+
+    # Regex patterns for legacy text protocol (backwards compatibility)
     PATTERNS = {
         "voltage": re.compile(r"V_bat:\s*(\d+\.?\d*)V?", re.IGNORECASE),
         "rpm": re.compile(r"RPM:\s*(\d+)", re.IGNORECASE),
@@ -30,7 +34,7 @@ class ArduinoService:
 
     def __init__(
         self,
-        port: str = "/dev/ttyUSB0",
+        port: str = "/dev/serial0",
         baudrate: int = 115200,
         buffer_size: int = 100,
     ):
@@ -52,6 +56,10 @@ class ArduinoService:
         # Serial port handle for sending commands
         self._serial: Any = None
         self._serial_lock = threading.Lock()
+
+        # Periodic status logging
+        self._last_status_log = 0.0
+        self._frame_count = 0
 
     def set_on_data(self, callback):
         """Set callback for new telemetry data. Called with data dict."""
@@ -135,10 +143,8 @@ class ArduinoService:
     def _connect_and_read(self):
         """Connect to Arduino serial and read data."""
         if serial is None:
-            # Stub mode - no pyserial installed
-            print("[Arduino] pyserial not installed, running in stub mode")
-            self._stub_mode()
-            return
+            print("[Arduino] pyserial not installed, cannot connect")
+            return  # Will retry via _reader_loop after 5s
 
         try:
             ser = serial.Serial(
@@ -147,24 +153,26 @@ class ArduinoService:
                 timeout=1.0,
             )
         except serial.SerialException as e:
-            print(f"[Arduino] Cannot open {self.port}: {e}, falling back to stub mode")
-            self._stub_mode()
-            return
+            print(f"[Arduino] Cannot open {self.port}: {e}")
+            return  # Will retry via _reader_loop after 5s
 
         try:
             # Store serial handle for send_command()
             with self._serial_lock:
                 self._serial = ser
             self._connected = True
+            self._last_status_log = time.time()
+            self._frame_count = 0
             print(f"[Arduino] Connected to {self.port} @ {self.baudrate} baud")
 
             while self._running:
                 try:
-                    line = ser.readline().decode("utf-8", errors="ignore").strip()
+                    # Read null-terminated line (TSV protocol)
+                    line = self._read_null_terminated(ser)
                     if not line:
                         continue
 
-                    # Check for ACK responses first
+                    # Check for ACK responses first (legacy newline-terminated)
                     ack_match = self.ACK_PATTERN.match(line)
                     if ack_match:
                         cmd, status, extra = ack_match.groups()
@@ -178,7 +186,7 @@ class ArduinoService:
                         with self._lock:
                             # Merge new values into latest (preserve old values for partial updates)
                             for key, val in data.items():
-                                if val is not None:
+                                if val is not None and not (isinstance(val, float) and math.isnan(val)):
                                     self._latest[key] = val
                             self._latest["time"] = data["time"]
                             self._buffer.append(self._latest.copy())
@@ -186,6 +194,20 @@ class ArduinoService:
                         # Invoke callback with new data
                         if self._on_data_callback:
                             self._on_data_callback(self._latest.copy())
+
+                        # Periodic status log (every 5s)
+                        self._frame_count += 1
+                        now = time.time()
+                        if now - self._last_status_log >= 5.0:
+                            elapsed = now - self._last_status_log
+                            fps = self._frame_count / elapsed
+                            v = self._latest.get('voltage', 0)
+                            rpm = self._latest.get('rpm', 0)
+                            gear = self._latest.get('gear', 0)
+                            roll = self._latest.get('roll', 0)
+                            print(f"[Arduino] {fps:.1f} fps | V={v:.1f} RPM={int(rpm)} G={int(gear)} roll={roll:.1f}°")
+                            self._last_status_log = now
+                            self._frame_count = 0
 
                 except serial.SerialException as e:
                     print(f"[Arduino] Serial error: {e}")
@@ -197,13 +219,40 @@ class ArduinoService:
                 self._serial = None
             ser.close()
 
-    def _parse_line(self, line: str) -> dict[str, Any] | None:
-        """Parse a line from Arduino - JSON first, fallback to regex.
+    def _read_null_terminated(self, ser) -> str:
+        """Read bytes until null terminator or newline (fallback for legacy)."""
+        buf = bytearray()
+        while self._running:
+            byte = ser.read(1)
+            if not byte:
+                # Timeout
+                if buf:
+                    # Return partial buffer if we have data
+                    return buf.decode("utf-8", errors="ignore").strip()
+                return ""
+            if byte == b'\x00' or byte == b'\n' or byte == b'\r':
+                # End of frame
+                if buf:
+                    return buf.decode("utf-8", errors="ignore").strip()
+                # Skip empty lines / consecutive terminators
+                continue
+            buf.append(byte[0])
+            # Safety limit
+            if len(buf) > 256:
+                return buf.decode("utf-8", errors="ignore").strip()
 
+    def _parse_line(self, line: str) -> dict[str, Any] | None:
+        """Parse a line from Arduino - TSV first, then JSON, fallback to regex.
+
+        TSV format: 12.45\t0.02\t-0.01\t... (10 fields, per PROTOCOL.md)
         JSON format: {"v":12.45,"rpm":4500,"eng":85,"gear":3}
         Legacy text: V_bat: 12.45V
         """
-        # Try JSON first (production format)
+        # Try TSV first (new protocol)
+        if '\t' in line:
+            return self._parse_tsv(line)
+
+        # Try JSON (may still be used for special messages)
         try:
             obj = json.loads(line)
             return {
@@ -225,31 +274,33 @@ class ArduinoService:
 
         return result if result else None
 
-    def _stub_mode(self):
-        """Fake data for testing without Arduino connected."""
-        import random
+    def _parse_tsv(self, line: str) -> dict[str, Any] | None:
+        """Parse TSV telemetry frame per PROTOCOL.md.
 
-        _rpm = 3000
+        Fields: voltage, ax, ay, az, gx, gy, gz, roll, pitch, yaw
+        Empty fields (stale IMU) become NaN.
+        """
+        fields = line.split('\t')
+        if len(fields) != len(self.TSV_FIELDS):
+            # Wrong field count - might be debug output or malformed
+            return None
 
-        while self._running:
-            self._connected = True
-            data = {
-                "time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "voltage": round(12.0 + random.uniform(-0.5, 0.8), 2),
-                "rpm": _rpm if random.random() > 0.1 else None,
-                "eng_temp": random.randint(60, 95),
-                "gear": random.randint(1, 6) if random.random() > 0.2 else 0,  # 0 = neutral
-            }
-            _rpm += 10
-            if _rpm > 7500:
-                _rpm = 500
+        result = {}
+        for i, name in enumerate(self.TSV_FIELDS):
+            val_str = fields[i].strip()
+            if val_str == '':
+                # Empty field = stale/missing data
+                result[name] = float('nan')
+            else:
+                try:
+                    result[name] = float(val_str)
+                except ValueError:
+                    result[name] = float('nan')
 
-            with self._lock:
-                self._latest = data
-                self._buffer.append(data)
+        # IMU axis correction for mounting orientation
+        # Roll needs inverting for motorcycle frame alignment
+        if 'roll' in result and not math.isnan(result['roll']):
+            result['roll'] = -result['roll']
 
-            # Invoke callback with new data
-            if self._on_data_callback:
-                self._on_data_callback(data)
+        return result
 
-            time.sleep(0.5)  # 2Hz stub updates

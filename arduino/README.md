@@ -40,33 +40,16 @@ Install via Arduino Library Manager:
 
 ## Protocol
 
-Simple text lines, one per sensor reading:
-```
-V_bat: 12.45
-Ax: 0.02
-Ay: -0.01
-Az: 1.00
-Gx: 0.50
-Gy: -0.25
-Gz: 0.10
-Roll: 2.35
-Pitch: -1.20
-Yaw: 45.80
-```
-
-If IMU data is stale (no valid packets for 200ms):
-```
-IMU: STALE
-```
-
-Commands from Pi are echoed back:
-```
-ACK: PING
-```
+TSV (tab-separated), null-terminated frames at 10Hz. See [PROTOCOL.md](PROTOCOL.md) for full specification.
 
 ## Planned
 
 - RPM sensing (pulse counting from ignition coil)
-- Engine temperature (thermocouple/NTC)
-- Gear position indicator
-- Turn signal / high beam status
+- Gear position indicator  
+  
+### Not planned
+
+- Engine temperature (thermocouple/NTC)  
+  *Borderline do not want to do, simple but not really useful*
+- Turn signal / high beam status  
+  *No need to do something the dash already does* 

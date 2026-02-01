@@ -39,6 +39,49 @@ bool comms_update() {
   return false;
 }
 
+void comms_send_telemetry(float voltage, const ImuData& imu, bool imu_valid, int rpm, int gear) {
+  // Field 0: voltage
+  Serial.print(voltage, 2);
+  Serial.write('\t');
+
+  if (imu_valid) {
+    // Fields 1-3: acceleration
+    Serial.print(imu.ax, 2);
+    Serial.write('\t');
+    Serial.print(imu.ay, 2);
+    Serial.write('\t');
+    Serial.print(imu.az, 2);
+    Serial.write('\t');
+
+    // Fields 4-6: angular velocity
+    Serial.print(imu.gx, 2);
+    Serial.write('\t');
+    Serial.print(imu.gy, 2);
+    Serial.write('\t');
+    Serial.print(imu.gz, 2);
+    Serial.write('\t');
+
+    // Fields 7-9: euler angles
+    Serial.print(imu.roll, 2);
+    Serial.write('\t');
+    Serial.print(imu.pitch, 2);
+    Serial.write('\t');
+    Serial.print(imu.yaw, 2);
+  } else {
+    // Empty fields for stale IMU (9 tabs for 9 empty fields)
+    Serial.print(F("\t\t\t\t\t\t\t\t"));
+  }
+
+  // Fields 10-11: RPM and gear
+  Serial.write('\t');
+  Serial.print(rpm);
+  Serial.write('\t');
+  Serial.print(gear);
+
+  // Null terminator (no newline)
+  Serial.write('\0');
+}
+
 void comms_send(const char* key, float value, int decimals) {
   Serial.print(key);
   Serial.print(": ");

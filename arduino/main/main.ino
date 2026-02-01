@@ -3,6 +3,8 @@
 
 #include "voltage.h"
 #include "imu.h"
+#include "rpm.h"
+#include "gear.h"
 #include "comms.h"
 
 // Timing
@@ -21,6 +23,10 @@ void setup() {
   imu_init();      // AltSoftSerial on pins 8(RX)/9(TX)
   Serial.println(F("[INIT] imu ok"));
 
+  rpm_init();
+  gear_init();
+  Serial.println(F("[INIT] rpm/gear ok"));
+
   // Let IMU warm up a bit before calibrating
   // (WT61 needs a moment to stabilize after power-on)
   delay(500);
@@ -35,6 +41,9 @@ void setup() {
 void loop() {
   // Always poll IMU - it's streaming at 20Hz
   imu_update();
+
+  // Update mock RPM (ramping)
+  rpm_update();
 
   // Process any commands from Pi
   if (comms_update()) {
@@ -63,28 +72,12 @@ void loop() {
 }
 
 void sendTelemetry() {
-  // Battery voltage
-  comms_send("V_bat", voltage_read());
+  // Send all telemetry in a single TSV frame
+  float voltage = voltage_read();
+  const ImuData& imu = imu_get_data();
+  bool imu_valid = imu_is_fresh();
+  int rpm = rpm_get();
+  int gear = gear_get(rpm);
 
-  // IMU data (only if we have fresh data)
-  if (imu_is_fresh()) {
-    const ImuData& imu = imu_get_data();
-
-    // Acceleration (g)
-    comms_send("Ax", imu.ax);
-    comms_send("Ay", imu.ay);
-    comms_send("Az", imu.az);
-
-    // Angular velocity (deg/s)
-    comms_send("Gx", imu.gx);
-    comms_send("Gy", imu.gy);
-    comms_send("Gz", imu.gz);
-
-    // Euler angles (degrees)
-    comms_send("Roll", imu.roll);
-    comms_send("Pitch", imu.pitch);
-    comms_send("Yaw", imu.yaw);
-  } else {
-    comms_send("IMU", "STALE");
-  }
+  comms_send_telemetry(voltage, imu, imu_valid, rpm, gear);
 }

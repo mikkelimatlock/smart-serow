@@ -10,6 +10,7 @@ static const int PIN_VBAT = A0;
 static const float DIVIDER_RATIO = 47.0 / (100.0 + 47.0);  // ~0.3197
 static const float ADC_REF = 5.0;
 static const int ADC_MAX = 1023;
+static const float OFFSET = 0.2; // calib
 
 void voltage_init() {
   // analogRead doesn't need explicit pinMode, but here for future config
@@ -23,5 +24,5 @@ int voltage_read_raw() {
 float voltage_read() {
   int raw = voltage_read_raw();
   float vDivider = (raw / (float)ADC_MAX) * ADC_REF;
-  return vDivider / DIVIDER_RATIO;
+  return vDivider / DIVIDER_RATIO + OFFSET; 
 }

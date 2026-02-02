@@ -12,17 +12,49 @@ static const float ADC_REF = 5.0;
 static const int ADC_MAX = 1023;
 static const float OFFSET = 0.2; // calib
 
+// Sliding window smoother (max 32 samples to keep RAM usage sane)
+static const int MAX_WINDOW = 32;
+static int _samples[MAX_WINDOW];
+static int _windowSize = 20;  // Active window size
+static int _sampleIndex = 0;
+static long _sampleSum = 0;
+
 void voltage_init() {
-  // analogRead doesn't need explicit pinMode, but here for future config
-  // e.g., could switch to internal 1.1V reference for different range
+  voltage_set_smoothing(20);  // Default 20 samples
+}
+
+void voltage_set_smoothing(int windowSize) {
+  // Clamp to valid range
+  if (windowSize < 1) windowSize = 1;
+  if (windowSize > MAX_WINDOW) windowSize = MAX_WINDOW;
+  _windowSize = windowSize;
+
+  // Pre-fill window with current reading
+  int initial = analogRead(PIN_VBAT);
+  for (int i = 0; i < _windowSize; i++) {
+    _samples[i] = initial;
+  }
+  _sampleSum = (long)initial * _windowSize;
+  _sampleIndex = 0;
 }
 
 int voltage_read_raw() {
   return analogRead(PIN_VBAT);
 }
 
+int voltage_read_smoothed() {
+  int raw = analogRead(PIN_VBAT);
+
+  _sampleSum -= _samples[_sampleIndex];   // Remove oldest
+  _samples[_sampleIndex] = raw;            // Store new
+  _sampleSum += raw;                       // Add new
+  _sampleIndex = (_sampleIndex + 1) % _windowSize;
+
+  return _sampleSum / _windowSize;
+}
+
 float voltage_read() {
-  int raw = voltage_read_raw();
+  int raw = voltage_read_smoothed();
   float vDivider = (raw / (float)ADC_MAX) * ADC_REF;
-  return vDivider / DIVIDER_RATIO + OFFSET; 
+  return vDivider / DIVIDER_RATIO + OFFSET;
 }

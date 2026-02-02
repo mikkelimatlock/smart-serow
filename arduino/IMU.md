@@ -6,14 +6,17 @@
 
 | Setting | Factory Default | Our Config |
 |---------|-----------------|------------|
-| Baud rate | 115200 | 9600 |
-| Output rate | 100Hz | 20Hz |
+| Baud rate | 115200 | 115200 |
+| Output rate | 100Hz | 100Hz |
 
-**Config command** (send at 115200 to switch to 9600/20Hz):
+**Config commands** (sent on init):
 ```
-0xFF 0xAA 0x64
+0xFF 0xAA 0x66  # Vertical mounting mode
+0xFF 0xAA 0x63  # 115200 baud / 100Hz
 ```
-This is saved to flash - persists across power cycles.
+Settings are saved to flash - persist across power cycles.
+
+**Fallback to 9600/20Hz:** If 115200 causes packet loss on AltSoftSerial, change `0x63` to `0x64` in `imu.cpp` and add `imuSerial.begin(9600)` after the delay.
 
 ## Wiring (ATmega328P / AltSoftSerial)
 

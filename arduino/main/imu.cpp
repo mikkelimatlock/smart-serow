@@ -79,15 +79,29 @@ static void processPacket() {
 }
 
 void imu_init() {
-  // Send config at factory baud rate (115200)
-  // Sets WT61 to 9600/20Hz - see IMU.md for command reference
-  // Idempotent: if already at 9600, command is garbled and ignored
+  // Configure WT61 at 115200 - stays there (no baud switch)
+  // See IMU.md for command reference
   imuSerial.begin(115200);
-  imu_send_cmd(0x64);  // 9600 baud / 20Hz
-  delay(100);          // Let WT61 process and restart
 
-  // Switch to working baud rate
+  imu_send_cmd(0x52);  // Reset yaw (for the sake of it)
+  delay(50);
+  imu_send_cmd(0x65);  // Flat mounting mode
+  delay(50);
+  imu_send_cmd(0x64);  // 9600 bauds / 20Hz report
+  delay(150);          // Let WT61 process config
+
+  // Revert to 9600 bauds
   imuSerial.begin(9600);
+
+  // In case WT61 already is at 9600
+  imu_send_cmd(0x52);  // Reset yaw (for the sake of it)
+  delay(50);
+  imu_send_cmd(0x65);  // Flat mounting mode
+  delay(50);
+  imu_send_cmd(0x64);  // 9600 bauds / 20Hz report
+  delay(150);          // Let WT61 process config
+
+
   rxIndex = 0;
   currentData = {0};
 }

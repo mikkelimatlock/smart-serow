@@ -48,8 +48,9 @@ class WhiskeyMark extends StatelessWidget {
                   roll: roll ?? 0,
                   pitch: pitch ?? 0,
                   lineColor: theme.foreground,
-                  skyColor: theme.subdued.withValues(alpha: 0.2),
-                  groundColor: theme.highlight.withValues(alpha: 0.3),
+                  borderWeight: 8,
+                  skyColor: theme.subdued,
+                  groundColor: theme.background,
                 ),
               ),
             ),
@@ -61,9 +62,9 @@ class WhiskeyMark extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'R: ${_formatAngle(roll)}',
+                  'Roll: ${_formatAngle(roll)}',
                   style: TextStyle(
-                    fontSize: fontSize,
+                    fontSize: fontSize * 0.8,
                     fontWeight: FontWeight.w400,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: theme.foreground,
@@ -73,7 +74,7 @@ class WhiskeyMark extends StatelessWidget {
                 Text(
                   'P: ${_formatAngle(pitch)}',
                   style: TextStyle(
-                    fontSize: fontSize,
+                    fontSize: fontSize * 0.8,
                     fontWeight: FontWeight.w400,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: theme.subdued,
@@ -81,8 +82,6 @@ class WhiskeyMark extends StatelessWidget {
                 ),
               ],
             ),
-
-            SizedBox(height: size * 0.02),
 
             // Label
             Text(
@@ -110,6 +109,7 @@ class WhiskeyMark extends StatelessWidget {
 class _HorizonPainter extends CustomPainter {
   final double roll;
   final double pitch;
+  final double borderWeight;
   final Color lineColor;
   final Color skyColor;
   final Color groundColor;
@@ -117,6 +117,7 @@ class _HorizonPainter extends CustomPainter {
   _HorizonPainter({
     required this.roll,
     required this.pitch,
+    required this.borderWeight,
     required this.lineColor,
     required this.skyColor,
     required this.groundColor,
@@ -191,7 +192,7 @@ class _HorizonPainter extends CustomPainter {
     // Draw circle border
     final borderPaint = Paint()
       ..color = lineColor.withValues(alpha: 0.5)
-      ..strokeWidth = 1.5
+      ..strokeWidth = borderWeight
       ..style = PaintingStyle.stroke;
 
     canvas.drawCircle(center, radius - 1, borderPaint);
@@ -199,7 +200,7 @@ class _HorizonPainter extends CustomPainter {
     // Draw center reference mark (fixed, doesn't rotate)
     final refPaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 2
+      ..strokeWidth = borderWeight * 0.8
       ..style = PaintingStyle.stroke;
 
     // Small wings
@@ -213,8 +214,12 @@ class _HorizonPainter extends CustomPainter {
       Offset(center.dx + radius * 0.3, center.dy),
       refPaint,
     );
-    // Center dot
-    canvas.drawCircle(center, 3, Paint()..color = lineColor);
+    // Center vertical line
+    canvas.drawLine(
+      Offset(center.dx, center.dy - radius * 0.05),
+      Offset(center.dx, center.dy + radius * 0.1),
+      refPaint,
+    );
 
     canvas.restore();
   }

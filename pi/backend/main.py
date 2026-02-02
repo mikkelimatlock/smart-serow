@@ -20,8 +20,8 @@ socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
 gps = GPSService()
 arduino = ArduinoService()
 
-# Throttles for emission rate limiting (2Hz for arduino, 1Hz for GPS)
-arduino_throttle = Throttle(min_interval=0.5)  # 2Hz max
+# Throttles for emission rate limiting (20Hz for arduino, 1Hz for GPS)
+arduino_throttle = Throttle(min_interval=0.05)  # 20Hz max
 gps_throttle = Throttle(min_interval=1.0)      # 1Hz max
 
 # Track connected clients
@@ -157,7 +157,7 @@ def throttle_flusher():
     """Periodically flush pending throttled data."""
     import gevent
     while True:
-        gevent.sleep(0.5)
+        gevent.sleep(0.05)  # 20Hz flush rate
 
         if arduino_throttle.has_pending:
             arduino_throttle.flush(lambda d: socketio.emit("arduino", d))

@@ -298,9 +298,11 @@ class ArduinoService:
                     result[name] = float('nan')
 
         # IMU axis correction for mounting orientation
-        # Roll needs inverting for motorcycle frame alignment
-        if 'roll' in result and not math.isnan(result['roll']):
-            result['roll'] = -result['roll']
+        # Pitch/yaw inverted for motorcycle frame alignment (roll left as-is)
+        if 'pitch' in result and not math.isnan(result['pitch']):
+            result['pitch'] = -result['pitch']
+        if 'yaw' in result and not math.isnan(result['yaw']):
+            result['yaw'] = -result['yaw']
 
         return result
 

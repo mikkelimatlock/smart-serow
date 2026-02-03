@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import 'backend_service.dart'; // Reuse ArduinoData, GpsData
+import 'theme_service.dart';
 
 /// Connection state for WebSocket
 enum WsConnectionState {
@@ -188,6 +189,13 @@ class WebSocketService {
         final pitchStr = arduino.pitch != null ? 'p${arduino.pitch!.round()}' : '';
         final imuStr = (rollStr.isNotEmpty || pitchStr.isNotEmpty) ? ' $rollStr$pitchStr' : '';
         _log('ard: ${arduino.rpm ?? "-"}rpm ${arduino.voltage ?? "-"}V g${arduino.gear ?? "-"}$imuStr');
+
+        // Theme switch piggybacks on arduino packets (edge-triggered from backend)
+        if (data.containsKey('theme_switch')) {
+          final isDark = data['theme_switch'] as bool;
+          ThemeService.instance.setDarkMode(isDark);
+          _log('theme: ${isDark ? "dark" : "light"}');
+        }
       }
     });
 
@@ -209,6 +217,13 @@ class WebSocketService {
         _latestStatus = status;
         _statusController.add(status);
         _log('status: gps=${status.gpsConnected} ard=${status.arduinoConnected}');
+
+        // Initial theme state comes with status on connect
+        if (data.containsKey('theme_switch')) {
+          final isDark = data['theme_switch'] as bool;
+          ThemeService.instance.setDarkMode(isDark);
+          _log('theme: ${isDark ? "dark" : "light"} (initial)');
+        }
       }
     });
 

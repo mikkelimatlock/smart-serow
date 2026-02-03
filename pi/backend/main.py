@@ -8,6 +8,7 @@ from flask_socketio import SocketIO, emit
 
 from gps_service import GPSService
 from arduino_service import ArduinoService
+from gpio_service import GPIOService
 from throttle import Throttle
 
 app = Flask(__name__)
@@ -19,6 +20,7 @@ socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
 # Services
 gps = GPSService()
 arduino = ArduinoService()
+gpio = GPIOService()
 
 # Throttles for emission rate limiting (20Hz for arduino, 1Hz for GPS)
 arduino_throttle = Throttle(min_interval=0.05)  # 20Hz max
@@ -43,6 +45,7 @@ def handle_connect():
     emit("status", {
         "gps_connected": gps.connected,
         "arduino_connected": arduino.connected,
+        "theme_switch": gpio.theme_switch,
     })
 
     # Send latest data if available
@@ -126,6 +129,12 @@ def handle_emergency(data):
 
 def on_arduino_data(data):
     """Called by ArduinoService when new telemetry arrives."""
+    # Check for GPIO state changes to piggyback on this emit
+    theme_change = gpio.get_theme_switch_change()
+    if theme_change is not None:
+        data = dict(data)  # Don't mutate original
+        data["theme_switch"] = theme_change
+
     def emit_fn(d):
         socketio.emit("arduino", d)
 
@@ -219,6 +228,7 @@ def main():
     # Start services
     gps.start()
     arduino.start()
+    gpio.start()
 
     # Start throttle flusher in background
     socketio.start_background_task(throttle_flusher)
@@ -230,6 +240,7 @@ def main():
     finally:
         arduino.stop()
         gps.stop()
+        gpio.stop()
 
 
 if __name__ == "__main__":

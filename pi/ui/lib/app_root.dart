@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -42,8 +43,11 @@ class _AppRootState extends State<AppRoot> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     // Check UART connection via backend health endpoint
+    // Also preload navigator images in parallel (usually UART is the bottleneck)
     setState(() => _initStatus = 'UART: connecting...');
+    final imagePreloadFuture = _preloadNavigatorImages();
     await _waitForUart();
+    await imagePreloadFuture;
 
     setState(() => _initStatus = 'GPS: standby');
     await Future.delayed(const Duration(milliseconds: 400));
@@ -95,6 +99,20 @@ class _AppRootState extends State<AppRoot> {
     // Timeout - proceed anyway (UI will show stale data indicators)
     setState(() => _initStatus = 'UART: timeout');
     await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  /// Preload navigator images into Flutter's image cache
+  ///
+  /// Scans for all PNGs in the navigator folder and precaches them.
+  /// Runs silently - no status updates (meant to run parallel with UART).
+  Future<void> _preloadNavigatorImages() async {
+    final images = await ConfigService.instance.getNavigatorImages();
+    for (final file in images) {
+      // precacheImage needs a context, but we're in initState territory
+      // Use the root context via a post-frame callback workaround
+      if (!mounted) return;
+      await precacheImage(FileImage(file), context);
+    }
   }
 
   @override

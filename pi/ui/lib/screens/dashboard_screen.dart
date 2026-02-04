@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show sqrt, sin, cos, pi;
 import 'package:flutter/material.dart';
 
 import '../services/backend_service.dart';
@@ -25,6 +26,8 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  static const _surpriseThreshold = 0.2; // G threshold for navigator surprise
+
   final _navigatorKey = GlobalKey<NavigatorWidgetState>();
 
   // Timer for Pi temp only (safety critical, direct file read)
@@ -47,6 +50,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? _pitch;
   double? _ax;
   double? _ay;
+  double? _dynamicAx;  // Gravity-compensated
+  double? _dynamicAy;
 
   // From backend - GPS data
   double? _gpsSpeed;
@@ -67,6 +72,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Subscribe to Arduino data stream
     _arduinoSub = WebSocketService.instance.arduinoStream.listen((data) {
+      // Gravity-compensated acceleration
+      // When tilted, gravity "leaks" into horizontal axes - subtract it out
+      final rollRad = (data.roll ?? 0) * pi / 180;
+      final pitchRad = (data.pitch ?? 0) * pi / 180;
+
+      // Subtract gravity leakage from measured acceleration
+      // Axes swapped for IMU mounting orientation
+      final dynamicAx = (data.ay ?? 0) + sin(rollRad);
+      final dynamicAy = (data.ax ?? 0) - (sin(pitchRad) * cos(rollRad));
+
       setState(() {
         _voltage = data.voltage;
         _rpm = data.rpm;
@@ -76,7 +91,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _pitch = data.pitch;
         _ax = data.ax;
         _ay = data.ay;
+        _dynamicAx = dynamicAx;
+        _dynamicAy = dynamicAy;
       });
+
+      final gMagnitude = sqrt(dynamicAx * dynamicAx + dynamicAy * dynamicAy);
+      if (gMagnitude > _surpriseThreshold) {
+        _navigatorKey.currentState?.setEmotion('surprise');
+      }
     });
 
     // Subscribe to GPS data stream
@@ -197,8 +219,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         Expanded(
                           child: AccelGraph(
-                            ax: _ay,  // Swapped: IMU Y → screen X (lateral)
-                            ay: _ax,  // Swapped: IMU X → screen Y (longitudinal)
+                            ax: _dynamicAx,  // Gravity-compensated lateral
+                            ay: _dynamicAy,  // Gravity-compensated longitudinal
                             maxG: 1.0,
                             ghostTrackPeriod: const Duration(seconds: 3),
                           ),

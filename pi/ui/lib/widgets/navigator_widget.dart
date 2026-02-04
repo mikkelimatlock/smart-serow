@@ -31,6 +31,12 @@ class NavigatorWidgetState extends State<NavigatorWidget>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
+    // Auto-reset to default after surprise animation completes
+    _shakeController.addStatusListener((status) {
+      if (status == AnimationStatus.completed && _emotion == 'surprise') {
+        setState(() => _emotion = 'default');
+      }
+    });
   }
 
   @override

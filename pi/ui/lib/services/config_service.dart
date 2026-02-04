@@ -93,4 +93,19 @@ class ConfigService {
     if (value is String && value.isNotEmpty) return value;
     return 'http://127.0.0.1:5000';
   }
+
+  /// Get list of all navigator image files
+  ///
+  /// Scans the navigator directory for PNG files.
+  /// Returns empty list if directory doesn't exist.
+  Future<List<File>> getNavigatorImages() async {
+    final dir = Directory('$assetsPath${Platform.pathSeparator}navigator${Platform.pathSeparator}$navigator');
+    if (!await dir.exists()) return [];
+
+    return dir
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.toLowerCase().endsWith('.png'))
+        .toList();
+  }
 }

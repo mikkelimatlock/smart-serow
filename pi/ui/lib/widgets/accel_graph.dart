@@ -94,8 +94,9 @@ class _AccelGraphState extends State<AccelGraph> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = math.min(constraints.maxWidth, constraints.maxHeight);
-        final gridSize = size * 0.75;
+        final gridSize = size * 0.6;
         final fontSize = size * 0.12;
+        final strokeSize = size * 0.015;
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -115,11 +116,38 @@ class _AccelGraphState extends State<AccelGraph> {
                   foreground: theme.foreground,
                   subdued: theme.subdued,
                   background: theme.background,
+                  strokeWeight: strokeSize,
                 ),
               ),
             ),
 
             SizedBox(height: size * 0.03),
+
+            // Numeric readout
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Lon: ${_formatAccel(widget.ay)} (${_formatAccel(_ghostAy)})',
+                  style: TextStyle(
+                    fontSize: fontSize * 0.5,
+                    fontWeight: FontWeight.w400,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: theme.foreground,
+                  ),
+                ),
+                SizedBox(width: size * 0.1),
+                Text(
+                  'Lat: ${_formatAccel(widget.ax)} (${_formatAccel(_ghostAx)})',
+                  style: TextStyle(
+                    fontSize: fontSize * 0.5,
+                    fontWeight: FontWeight.w400,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: theme.subdued,
+                  ),
+                ),
+              ],
+            ),
 
             // Label
             Text(
@@ -136,6 +164,11 @@ class _AccelGraphState extends State<AccelGraph> {
       },
     );
   }
+
+  String _formatAccel(double? force) {
+    if (force == null) return '—°';
+    return '${force.toStringAsFixed(1)}G';
+  }
 }
 
 /// Custom painter for the G-meter grid and dots
@@ -149,6 +182,7 @@ class _AccelGraphPainter extends CustomPainter {
   final Color foreground;
   final Color subdued;
   final Color background;
+  final double strokeWeight;
 
   _AccelGraphPainter({
     required this.ax,
@@ -160,19 +194,23 @@ class _AccelGraphPainter extends CustomPainter {
     required this.foreground,
     required this.subdued,
     required this.background,
+    required this.strokeWeight,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final halfSize = size.width / 2;
+    final radius = math.min(size.width, size.height) / 2;
+
+    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: center, radius: radius)));
 
     // No rectangular border
 
     // Grid lines at 0.5G intervals
     final gridPaint = Paint()
       ..color = subdued
-      ..strokeWidth = 2
+      ..strokeWidth = strokeWeight * 0.6
       ..style = PaintingStyle.stroke;
 
     final gStep = 0.5;
@@ -206,8 +244,8 @@ class _AccelGraphPainter extends CustomPainter {
 
     // Center axis lines (heavier)
     final axisPaint = Paint()
-      ..color = subdued.withValues(alpha: 0.6)
-      ..strokeWidth = 3
+      ..color = subdued
+      ..strokeWidth = strokeWeight
       ..style = PaintingStyle.stroke;
 
     // Horizontal axis
@@ -226,7 +264,7 @@ class _AccelGraphPainter extends CustomPainter {
     // G-ring markers (circles at 1G and 2G for quick reference)
     final ringPaint = Paint()
       ..color = subdued
-      ..strokeWidth = 1.5
+      ..strokeWidth = strokeWeight
       ..style = PaintingStyle.stroke;
 
     for (double g = 1.0; g <= maxG; g += 1.0) {
@@ -242,7 +280,7 @@ class _AccelGraphPainter extends CustomPainter {
 
       final ghostPaint = Paint()
         ..color = subdued.withValues(alpha: 0.5)
-        ..strokeWidth = 2
+        ..strokeWidth = strokeWeight
         ..style = PaintingStyle.stroke;
 
       canvas.drawCircle(Offset(ghostX, ghostY), ghostRadius, ghostPaint);

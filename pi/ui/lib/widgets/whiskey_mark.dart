@@ -72,7 +72,7 @@ class WhiskeyMark extends StatelessWidget {
                 ),
                 SizedBox(width: size * 0.1),
                 Text(
-                  'P: ${_formatAngle(pitch)}',
+                  'Pitch: ${_formatAngle(pitch)}',
                   style: TextStyle(
                     fontSize: fontSize * 0.5,
                     fontWeight: FontWeight.w400,

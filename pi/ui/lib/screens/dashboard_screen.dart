@@ -26,7 +26,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  static const _surpriseThreshold = 0.2; // G threshold for navigator surprise
+  static const _surpriseThreshold = 0.3; // G threshold for navigator surprise
 
   final _navigatorKey = GlobalKey<NavigatorWidgetState>();
 

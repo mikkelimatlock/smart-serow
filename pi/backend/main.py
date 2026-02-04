@@ -129,11 +129,9 @@ def handle_emergency(data):
 
 def on_arduino_data(data):
     """Called by ArduinoService when new telemetry arrives."""
-    # Check for GPIO state changes to piggyback on this emit
-    theme_change = gpio.get_theme_switch_change()
-    if theme_change is not None:
-        data = dict(data)  # Don't mutate original
-        data["theme_switch"] = theme_change
+    # Always include current GPIO state (UI dedupes)
+    data = dict(data)  # Don't mutate original
+    data["theme_switch"] = gpio.theme_switch
 
     def emit_fn(d):
         socketio.emit("arduino", d)

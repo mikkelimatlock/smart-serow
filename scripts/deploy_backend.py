@@ -78,6 +78,23 @@ def deploy(restart: bool = False) -> bool:
         f"{ssh_target}:{remote_path}/",
     ])
 
+    # Ensure system GPIO package is installed (pip version needs compilation)
+    print()
+    print("Ensuring system GPIO package...")
+    run(
+        ["ssh", ssh_target, "dpkg -s python3-rpi.gpio >/dev/null 2>&1 || sudo apt install -y python3-rpi.gpio"],
+        check=False,
+    )
+
+    # Create venv with system-site-packages if it doesn't exist
+    # This allows access to apt-installed packages like python3-rpi.gpio
+    print()
+    print("Ensuring venv with system-site-packages...")
+    run(
+        ["ssh", ssh_target, f"cd {remote_path} && [ -d .venv ] || ~/.local/bin/uv venv --system-site-packages"],
+        check=False,
+    )
+
     # Run uv sync to install/update dependencies
     # Use full path since non-interactive SSH doesn't load .bashrc
     print()
@@ -115,9 +132,10 @@ def deploy(restart: bool = False) -> bool:
         print("Or run this script with --restart flag")
 
     print()
-    print("Note: First-time setup on Pi requires uv to be installed:")
+    print("Note: First-time setup on Pi requires:")
     print(f"  ssh {ssh_target}")
-    print("  curl -LsSf https://astral.sh/uv/install.sh | sh")
+    print("  curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv")
+    print("  sudo apt install python3-rpi.gpio                 # GPIO support")
 
     return True
 

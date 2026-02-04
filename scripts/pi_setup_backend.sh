@@ -27,10 +27,10 @@ else
     echo "uv already installed: $(uv --version)"
 fi
 
-# Install gpsd
-echo "Installing gpsd..."
+# Install gpsd and GPIO support
+echo "Installing system packages..."
 sudo apt-get update
-sudo apt-get install -y gpsd gpsd-clients
+sudo apt-get install -y gpsd gpsd-clients python3-rpi.gpio
 
 # Configure gpsd (user needs to edit DEVICES)
 GPSD_CONFIG="/etc/default/gpsd"
@@ -66,7 +66,10 @@ echo ""
 echo "Next steps:"
 echo "1. Configure gpsd: sudo nano /etc/default/gpsd"
 echo "2. Deploy backend: python3 scripts/deploy_backend.py (from dev machine)"
-echo "3. On Pi, install deps: cd $BACKEND_DIR && uv sync"
+echo "3. On Pi, create venv and install deps:"
+echo "     cd $BACKEND_DIR"
+echo "     uv venv --system-site-packages  # Allows access to apt packages"
+echo "     uv sync"
 echo "4. Start service: sudo systemctl start smartserow-backend"
 echo ""
 echo "Useful commands:"

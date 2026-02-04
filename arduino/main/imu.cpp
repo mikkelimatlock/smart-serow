@@ -88,7 +88,7 @@ void imu_init() {
   imu_send_cmd(0x65);  // Flat mounting mode
   delay(50);
   imu_send_cmd(0x64);  // 9600 bauds / 20Hz report
-  delay(150);          // Let WT61 process config
+  delay(50);          // Let WT61 process config
 
   // Revert to 9600 bauds
   imuSerial.begin(9600);
@@ -99,7 +99,7 @@ void imu_init() {
   imu_send_cmd(0x65);  // Flat mounting mode
   delay(50);
   imu_send_cmd(0x64);  // 9600 bauds / 20Hz report
-  delay(150);          // Let WT61 process config
+  delay(50);          // Let WT61 process config
 
 
   rxIndex = 0;

@@ -88,8 +88,8 @@ class NavigatorWidgetState extends State<NavigatorWidget>
       animation: _shakeController,
       child: image,
       builder: (context, child) {
-        final shake = sin(_shakeController.value * pi * 6) * 10 *
-            (1 - _shakeController.value); // 6 oscillations, 4px amplitude, decay
+        final shake = sin(_shakeController.value * pi * 6) * 25 *
+            (1 - _shakeController.value); // 6 oscillations, 25px amplitude, decay
         return Transform.translate(
           offset: Offset(shake, 0),
           child: child,

@@ -180,7 +180,7 @@ class _HorizonPainter extends CustomPainter {
     // Horizon line
     final linePaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 2
+      ..strokeWidth = borderWeight * 0.1
       ..style = PaintingStyle.stroke;
 
     canvas.drawLine(
@@ -189,12 +189,34 @@ class _HorizonPainter extends CustomPainter {
       linePaint,
     );
 
+    // Pitch ladder lines (15° intervals)
+    final ladderPaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = borderWeight * 0.4
+      ..style = PaintingStyle.stroke;
+
+    
+
+    for (int deg = -75; deg <= 75; deg += 15) {
+      if (deg == 0) continue; // Skip horizon (already drawn)
+
+      final ladderY = horizonY - (deg / 90) * radius;
+      final double widthMod = (100 - (deg < 0 ? -deg : deg)) / 100;
+      final ladderWidth = radius * 0.7 * widthMod; // longer ladder if close to horizon
+
+      canvas.drawLine(
+        Offset(center.dx - ladderWidth, ladderY),
+        Offset(center.dx + ladderWidth, ladderY),
+        ladderPaint,
+      );
+    }
+
     canvas.restore();
 
     // Draw circle border
     final borderPaint = Paint()
-      ..color = lineColor.withValues(alpha: 0.5)
-      ..strokeWidth = borderWeight
+      ..color = lineColor
+      ..strokeWidth = borderWeight * 1.1
       ..style = PaintingStyle.stroke;
 
     canvas.drawCircle(center, radius - 1, borderPaint);
@@ -202,7 +224,7 @@ class _HorizonPainter extends CustomPainter {
     // Draw center reference mark (fixed, doesn't rotate)
     final refPaint = Paint()
       ..color = lineColor
-      ..strokeWidth = borderWeight * 0.8
+      ..strokeWidth = borderWeight
       ..style = PaintingStyle.stroke;
 
     // Small wings
@@ -216,12 +238,24 @@ class _HorizonPainter extends CustomPainter {
       Offset(center.dx + radius * 0.3, center.dy),
       refPaint,
     );
-    // Center vertical line
+
+    // Center arrow
+    final refTipPaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = borderWeight * 0.8
+      ..style = PaintingStyle.stroke;
+
     canvas.drawLine(
-      Offset(center.dx, center.dy - radius * 0.05),
-      Offset(center.dx, center.dy + radius * 0.1),
-      refPaint,
+      Offset(center.dx, center.dy),
+      Offset(center.dx + radius * 0.07, center.dy + radius * 0.1),
+      refTipPaint,
     );
+    canvas.drawLine(
+      Offset(center.dx, center.dy),
+      Offset(center.dx - radius * 0.07, center.dy + radius * 0.1),
+      refTipPaint,
+    );
+
 
     canvas.restore();
   }

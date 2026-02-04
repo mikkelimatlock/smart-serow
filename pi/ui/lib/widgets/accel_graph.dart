@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
@@ -38,53 +37,44 @@ class _AccelGraphState extends State<AccelGraph> {
   double _ghostAx = 0;
   double _ghostAy = 0;
   double _ghostMagnitude = 0;
-  Timer? _ghostResetTimer;
 
-  @override
-  void initState() {
-    super.initState();
-    _setupGhostTimer();
-  }
+  // Timestamped history for sliding window
+  List<({DateTime time, double ax, double ay})> _history = [];
 
   @override
   void didUpdateWidget(AccelGraph oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Update ghost position if current magnitude exceeds previous peak
     final currentAx = widget.ax ?? 0;
     final currentAy = widget.ay ?? 0;
-    final currentMag = math.sqrt(currentAx * currentAx + currentAy * currentAy);
+    final now = DateTime.now();
 
-    if (currentMag > _ghostMagnitude) {
+    // Only track history when ghostTrackPeriod is configured
+    if (widget.ghostTrackPeriod != null) {
+      // Add current reading to history
+      _history.add((time: now, ax: currentAx, ay: currentAy));
+
+      // Prune entries outside the window
+      final cutoff = now.subtract(widget.ghostTrackPeriod!);
+      _history.removeWhere((e) => e.time.isBefore(cutoff));
+
+      // Recalculate ghost as max magnitude from current window
       _ghostAx = currentAx;
       _ghostAy = currentAy;
-      _ghostMagnitude = currentMag;
-    }
+      _ghostMagnitude = 0;
 
-    // Restart timer if period changed
-    if (oldWidget.ghostTrackPeriod != widget.ghostTrackPeriod) {
-      _setupGhostTimer();
+      for (final entry in _history) {
+        final mag = math.sqrt(entry.ax * entry.ax + entry.ay * entry.ay);
+        if (mag > _ghostMagnitude) {
+          _ghostAx = entry.ax;
+          _ghostAy = entry.ay;
+          _ghostMagnitude = mag;
+        }
+      }
+    } else {
+      // No window configured - clear history to save memory
+      _history.clear();
     }
-  }
-
-  void _setupGhostTimer() {
-    _ghostResetTimer?.cancel();
-    if (widget.ghostTrackPeriod != null) {
-      _ghostResetTimer = Timer.periodic(widget.ghostTrackPeriod!, (_) {
-        setState(() {
-          // Reset ghost to current position
-          _ghostAx = widget.ax ?? 0;
-          _ghostAy = widget.ay ?? 0;
-          _ghostMagnitude = math.sqrt(_ghostAx * _ghostAx + _ghostAy * _ghostAy);
-        });
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _ghostResetTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -117,6 +107,7 @@ class _AccelGraphState extends State<AccelGraph> {
                   subdued: theme.subdued,
                   background: theme.background,
                   strokeWeight: strokeSize,
+                  traceBuffer: _history.map((e) => Offset(e.ax, e.ay)).toList(),
                 ),
               ),
             ),
@@ -185,6 +176,7 @@ class _AccelGraphPainter extends CustomPainter {
   final Color subdued;
   final Color background;
   final double strokeWeight;
+  final List<Offset> traceBuffer;
 
   _AccelGraphPainter({
     required this.ax,
@@ -197,6 +189,7 @@ class _AccelGraphPainter extends CustomPainter {
     required this.subdued,
     required this.background,
     required this.strokeWeight,
+    required this.traceBuffer,
   });
 
   @override
@@ -209,13 +202,13 @@ class _AccelGraphPainter extends CustomPainter {
 
     // No rectangular border
 
-    // Grid lines at 0.5G intervals
+    // Grid lines at 0.25G intervals
     final gridPaint = Paint()
       ..color = subdued
-      ..strokeWidth = strokeWeight * 0.6
+      ..strokeWidth = strokeWeight * 0.4
       ..style = PaintingStyle.stroke;
 
-    final gStep = 0.5;
+    final gStep = 0.25;
     for (double g = gStep; g < maxG; g += gStep) {
       final offset = (g / maxG) * halfSize;
 
@@ -263,15 +256,38 @@ class _AccelGraphPainter extends CustomPainter {
       axisPaint,
     );
 
-    // G-ring markers (circles at 1G and 2G for quick reference)
+    // G-ring markers (circles at every 0.5G for quick reference)
     final ringPaint = Paint()
       ..color = subdued
-      ..strokeWidth = strokeWeight
+      ..strokeWidth = strokeWeight * 0.5
       ..style = PaintingStyle.stroke;
 
-    for (double g = 1.0; g <= maxG; g += 1.0) {
+    for (double g = 0.5; g <= maxG; g += 0.5) {
       final radius = (g / maxG) * halfSize;
       canvas.drawCircle(center, radius, ringPaint);
+    }
+
+    // Trace line
+    if (traceBuffer.length >= 2) {
+      final tracePaint = Paint()
+        ..color = foreground
+        ..strokeWidth = strokeWeight * 0.4
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+
+      final path = Path();
+      for (int i = 0; i < traceBuffer.length; i++) {
+        final pt = traceBuffer[i];
+        final x = center.dx + (pt.dx.clamp(-maxG, maxG) / maxG) * halfSize;
+        final y = center.dy - (pt.dy.clamp(-maxG, maxG) / maxG) * halfSize;
+        if (i == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+      canvas.drawPath(path, tracePaint);
     }
 
     // Ghost dot (if enabled and has data)
@@ -281,7 +297,7 @@ class _AccelGraphPainter extends CustomPainter {
       final ghostRadius = halfSize * 0.08;
 
       final ghostPaint = Paint()
-        ..color = subdued.withValues(alpha: 0.5)
+        ..color = subdued
         ..strokeWidth = strokeWeight
         ..style = PaintingStyle.stroke;
 
@@ -311,6 +327,7 @@ class _AccelGraphPainter extends CustomPainter {
         showGhost != oldDelegate.showGhost ||
         maxG != oldDelegate.maxG ||
         foreground != oldDelegate.foreground ||
-        subdued != oldDelegate.subdued;
+        subdued != oldDelegate.subdued ||
+        traceBuffer != oldDelegate.traceBuffer;
   }
 }

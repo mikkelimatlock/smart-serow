@@ -221,8 +221,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: AccelGraph(
                             ax: _dynamicAx,  // Gravity-compensated lateral
                             ay: _dynamicAy,  // Gravity-compensated longitudinal
-                            maxG: 1.0,
-                            ghostTrackPeriod: const Duration(seconds: 3),
+                            maxG: 0.8,
+                            ghostTrackPeriod: const Duration(seconds: 4),
                           ),
                         )
                       ],

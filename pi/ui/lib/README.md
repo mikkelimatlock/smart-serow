@@ -22,10 +22,28 @@ All services use singleton pattern with `ServiceName.instance`.
 | Service | Role |
 |---------|------|
 | `ConfigService` | Loads `config.json`, exposes settings |
-| `PiIO` | Pi hardware interface (CPU temp, future GPIO) |
+| `WebSocketService` | socket.io client, streams for arduino/gps/connection/debug, auto-reconnect |
+| `PiIO` | Pi hardware interface (CPU temp) |
 | `OverheatMonitor` | Polls temp, fires callback when threshold exceeded |
 | `ThemeService` | Dark/bright mode state, notifies listeners |
 | `TestFlipFlopService` | Debug: toggles theme + navigator emotion every 2s |
+
+## Key Widgets
+
+| Widget | Purpose |
+|--------|---------|
+| `NavigatorWidget` | Animated character with emotion states (images precached at startup) |
+| `AccelGraph` | Real-time accelerometer visualization with gravity compensation |
+| `WhiskeyMark` | Gimbal-style horizon indicator using IMU roll/pitch |
+| `SystemBar` | Top status bar (time, connection, Pi temp) |
+| `StatBox` | Reusable metric display box |
+| `DebugConsole` | Scrolling log overlay for diagnostics |
+
+## Notes
+
+- **Gravity compensation**: Accelerometer display subtracts 1g from Z-axis to show deviation from vertical
+- **Navigator precaching**: All navigator images are loaded during splash screen to prevent frame drops
+- **Theme switching**: Backend sends `theme_switch` via WebSocket status events (triggered by GPIO)
 
 ## Theme System
 

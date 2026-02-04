@@ -46,6 +46,8 @@ Called automatically by `build.py`. Looks for theme matching `navigator` in `con
 | `pi_setup_backend.sh` | First-time Pi config for backend (uv, gpsd, systemd) |
 | `smartserow-ui.service.sample` | UI systemd unit template |
 | `smartserow-backend.service.sample` | Backend systemd unit template |
+| `smartserow-ui.service` | Production UI systemd unit (gitignored, Pi-specific) |
+| `smartserow-backend.service` | Production backend systemd unit (gitignored, Pi-specific) |
 
 ```bash
 # On the Pi - UI setup

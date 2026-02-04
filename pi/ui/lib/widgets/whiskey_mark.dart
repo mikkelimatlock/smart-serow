@@ -85,7 +85,7 @@ class WhiskeyMark extends StatelessWidget {
 
             // Label
             Text(
-              'ATTITUDE',
+              'Attitude',
               style: TextStyle(
                 fontSize: fontSize * 0.8,
                 fontWeight: FontWeight.w400,

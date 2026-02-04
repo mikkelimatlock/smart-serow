@@ -30,6 +30,8 @@ uv run flask --app main run --host 0.0.0.0 --port 5000 --reload
 
 ## API
 
+### HTTP Endpoints
+
 | Endpoint | Description |
 |----------|-------------|
 | `GET /health` | Health check, shows gpsd and Arduino connection status |
@@ -37,6 +39,34 @@ uv run flask --app main run --host 0.0.0.0 --port 5000 --reload
 | `GET /gps/history` | Last 100 buffered GPS positions |
 | `GET /arduino` | Latest Arduino telemetry (voltage, rpm, eng_temp, gear) |
 | `GET /arduino/history` | Last 100 buffered Arduino readings |
+
+### WebSocket Events (socket.io)
+
+Real-time data is pushed over WebSocket. The UI connects once and receives streams.
+
+**Server → Client:**
+
+| Event | Description |
+|-------|-------------|
+| `arduino` | Real-time telemetry (voltage, rpm, roll, pitch, accel, etc.) |
+| `gps` | GPS position updates |
+| `status` | Connection status + `theme_switch` signal from GPIO |
+| `alert` | System alerts |
+| `ack` | Command acknowledgments |
+
+**Client → Server:**
+
+| Event | Description |
+|-------|-------------|
+| `button` | UI button presses (horn, light, indicators, hazard) |
+| `emergency` | Emergency signal |
+
+### Throttling
+
+WebSocket data is rate-limited to prevent flooding:
+
+- **Arduino data**: 20Hz max
+- **GPS data**: 1Hz max
 
 ## Test from SSH
 

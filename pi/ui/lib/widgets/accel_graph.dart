@@ -151,7 +151,7 @@ class _AccelGraphState extends State<AccelGraph> {
 
             // Label
             Text(
-              'ACCEL',
+              'Acceleration',
               style: TextStyle(
                 fontSize: fontSize * 0.8,
                 fontWeight: FontWeight.w400,
@@ -167,7 +167,9 @@ class _AccelGraphState extends State<AccelGraph> {
 
   String _formatAccel(double? force) {
     if (force == null) return '—°';
-    return '${force.toStringAsFixed(1)}G';
+    return '${
+      force.toStringAsFixed(1) == '-0.0' ? '0.0' : force.toStringAsFixed(1)
+      }G';
   }
 }
 

@@ -64,7 +64,7 @@ class WhiskeyMark extends StatelessWidget {
                 Text(
                   'Roll: ${_formatAngle(roll)}',
                   style: TextStyle(
-                    fontSize: fontSize * 0.8,
+                    fontSize: fontSize * 0.5,
                     fontWeight: FontWeight.w400,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: theme.foreground,
@@ -74,7 +74,7 @@ class WhiskeyMark extends StatelessWidget {
                 Text(
                   'P: ${_formatAngle(pitch)}',
                   style: TextStyle(
-                    fontSize: fontSize * 0.8,
+                    fontSize: fontSize * 0.5,
                     fontWeight: FontWeight.w400,
                     fontFeatures: const [FontFeature.tabularFigures()],
                     color: theme.subdued,
@@ -101,7 +101,9 @@ class WhiskeyMark extends StatelessWidget {
 
   String _formatAngle(double? angle) {
     if (angle == null) return '—°';
-    return '${angle.round()}°';
+    return '${
+      angle.round() > 180 ? angle.round() - 360 : angle.round()
+      }°';
   }
 }
 

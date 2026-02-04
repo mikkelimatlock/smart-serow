@@ -33,11 +33,11 @@ class TestFlipFlopService {
       // ThemeService.instance.toggle();
 
       // Surprise the navigator
-      if (navigatorKey.currentState?.emotion == 'surprise') {
-        navigatorKey.currentState?.reset();
-      } else {
-        navigatorKey.currentState?.setEmotion('surprise');
-      }
+      // if (navigatorKey.currentState?.emotion == 'surprise') {
+      //   navigatorKey.currentState?.reset();
+      // } else {
+      //   navigatorKey.currentState?.setEmotion('surprise');
+      // }
     });
   }
 

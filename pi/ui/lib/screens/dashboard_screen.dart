@@ -11,6 +11,7 @@ import '../widgets/stat_box_main.dart';
 import '../widgets/system_bar.dart';
 import '../widgets/debug_console.dart';
 import '../widgets/whiskey_mark.dart';
+import '../widgets/accel_graph.dart';
 
 // test service for triggers
 import '../services/test_flipflop_service.dart';
@@ -44,6 +45,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int? _gear;
   double? _roll;
   double? _pitch;
+  double? _ax;
+  double? _ay;
 
   // From backend - GPS data
   double? _gpsSpeed;
@@ -71,6 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _gear = data.gear;
         _roll = data.roll;
         _pitch = data.pitch;
+        _ax = data.ax;
+        _ay = data.ay;
       });
     });
 
@@ -106,6 +111,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _gear = cachedArduino.gear;
       _roll = cachedArduino.roll;
       _pitch = cachedArduino.pitch;
+      _ax = cachedArduino.ax;
+      _ay = cachedArduino.ay;
     }
 
     final cachedGps = WebSocketService.instance.latestGps;
@@ -181,11 +188,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     flex: 8,
                     child: Row(
                       children: [
-                        // RPM from Arduino
-                        // StatBoxMain(
-                        //   value: _formatInt(_rpm),
-                        //   label: 'RPM',
-                        // ),
                         // Attitude indicator (whiskey mark)
                         Expanded(
                           child: WhiskeyMark(
@@ -193,6 +195,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             pitch: _pitch,
                           ),
                         ),
+                        Expanded(
+                          child: AccelGraph(
+                            ax: _ay,  // Swapped: IMU Y → screen X (lateral)
+                            ay: _ax,  // Swapped: IMU X → screen Y (longitudinal)
+                            maxG: 1.0,
+                            ghostTrackPeriod: const Duration(seconds: 3),
+                          ),
+                        )
                       ],
                     ),
                   ),
@@ -204,7 +214,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         StatBox(value: _formatInt(_rpm), label: 'RPM', isWarning: () => (_rpm ?? 0) > 4000),
-                        StatBox(value: _formatInt(_engineTemp), unit: '°C', label: 'ENG', isWarning: () => (_engineTemp ?? 0) > 120),
                         StatBox(value: _formatGear(_gear), label: 'GEAR'),
                       ],
                     ),

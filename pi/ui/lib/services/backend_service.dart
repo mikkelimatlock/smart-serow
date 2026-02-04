@@ -10,8 +10,11 @@ class ArduinoData {
   final int? gear; // 0 = neutral, 1-6 = gear
   final double? roll;  // Euler angle in degrees (negative = left, positive = right)
   final double? pitch; // Euler angle in degrees (negative = nose down)
+  final double? ax;    // Lateral acceleration (g)
+  final double? ay;    // Longitudinal acceleration (g)
+  final double? az;    // Vertical acceleration (g)
 
-  ArduinoData({this.voltage, this.rpm, this.engTemp, this.gear, this.roll, this.pitch});
+  ArduinoData({this.voltage, this.rpm, this.engTemp, this.gear, this.roll, this.pitch, this.ax, this.ay, this.az});
 
   factory ArduinoData.fromJson(Map<String, dynamic> json) {
     return ArduinoData(
@@ -21,6 +24,9 @@ class ArduinoData {
       gear: (json['gear'] as num?)?.toInt(),
       roll: (json['roll'] as num?)?.toDouble(),  // IMU mounted with axes swapped
       pitch: (json['pitch'] as num?)?.toDouble(),
+      ax: (json['ax'] as num?)?.toDouble(),
+      ay: (json['ay'] as num?)?.toDouble(),
+      az: (json['az'] as num?)?.toDouble(),
     );
   }
 }

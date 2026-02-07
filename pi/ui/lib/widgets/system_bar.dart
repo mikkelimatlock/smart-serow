@@ -49,14 +49,6 @@ class SystemBar extends StatelessWidget {
 
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.subdued.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -106,7 +98,7 @@ class SystemBar extends StatelessWidget {
                 _Indicator(
                   label: 'Mains',
                   value: voltage != null ? '${voltage!.toStringAsFixed(1)} V' : 'N/A',
-                  isAbnormal: voltage == null || voltage! < 11.9,
+                  isAbnormal: voltage == null || voltage! < 11.7 || voltage! > 14.5,
                   alignment: Alignment.centerLeft,
                   labelSize: labelSize,
                   valueSize: valueSize,

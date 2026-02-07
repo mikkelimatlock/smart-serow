@@ -206,9 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     wsState: _wsState,
                   ),
 
-                  const SizedBox(height: 2),
-
-                  // Main content area - big stat boxes
+                  // Main content area - big widgets
                   Expanded(
                     flex: 7,
                     child: Row(

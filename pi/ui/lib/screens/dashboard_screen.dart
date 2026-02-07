@@ -203,11 +203,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     wsState: _wsState,
                   ),
 
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 2),
 
                   // Main content area - big stat boxes
                   Expanded(
-                    flex: 8,
+                    flex: 7,
                     child: Row(
                       children: [
                         // Attitude indicator (whiskey mark)
@@ -231,11 +231,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Bottom stats row
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         StatBox(value: _formatInt(_rpm), label: 'RPM', isWarning: () => (_rpm ?? 0) > 4000),
+                        GpsCompass(heading: 147),
                         StatBox(value: _formatGear(_gear), label: 'GEAR'),
                       ],
                     ),

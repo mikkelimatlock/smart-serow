@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Splash screen - shown during initialization
+///
+/// Displays parallel status items that independently flip to "Ready".
 class SplashScreen extends StatelessWidget {
-  final String status;
+  final Map<String, String> statuses;
 
-  const SplashScreen({super.key, required this.status});
+  const SplashScreen({super.key, required this.statuses});
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +35,19 @@ class SplashScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              status,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontSize: 80,
-                color: theme.subdued,
-              ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: statuses.entries.map((entry) {
+                final isReady = entry.value == 'Ready';
+                return Text(
+                  '${entry.key}: ${entry.value}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 48,
+                    color: isReady ? theme.foreground : theme.subdued,
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ),

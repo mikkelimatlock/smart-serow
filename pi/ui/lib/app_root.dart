@@ -19,7 +19,7 @@ class AppRoot extends StatefulWidget {
 class _AppRootState extends State<AppRoot> {
   bool _initialized = false;
   bool _overheatTriggered = false;
-  String _initStatus = 'Starting...';
+  final Map<String, String> _initStatuses = {};
 
   @override
   void initState() {
@@ -33,26 +33,31 @@ class _AppRootState extends State<AppRoot> {
     super.dispose();
   }
 
+  void _updateStatus(String key, String value) {
+    setState(() => _initStatuses[key] = value);
+  }
+
   Future<void> _runInitSequence() async {
-    // Load config first
-    setState(() => _initStatus = 'Loading config...');
+    // Show all items from the start so the row doesn't jump around
+    _updateStatus('Config', '...');
+    _updateStatus('UART', '...');
+    _updateStatus('Navigator', '...');
+
+    // Config must load first (everything else depends on it)
+    _updateStatus('Config', 'Loading');
     await ConfigService.instance.load();
+    _updateStatus('Config', 'Ready');
 
-    setState(() => _initStatus = 'Checking systems...');
+    // UART health check and navigator image preload run truly in parallel
+    _updateStatus('UART', 'Connecting');
+    _updateStatus('Navigator', 'Loading');
+    await Future.wait([
+      _waitForUart(),
+      _preloadNavigatorImages(),
+    ]);
+
+    // Let the user see the all-ready state for a moment
     await Future.delayed(const Duration(milliseconds: 500));
-
-    // Check UART connection via backend health endpoint
-    // Also preload navigator images in parallel (usually UART is the bottleneck)
-    setState(() => _initStatus = 'UART: connecting...');
-    final imagePreloadFuture = _preloadNavigatorImages();
-    await _waitForUart();
-    await imagePreloadFuture;
-
-    setState(() => _initStatus = 'GPS: standby');
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    setState(() => _initStatus = 'Ready');
-    await Future.delayed(const Duration(milliseconds: 300));
 
     // Start overheat monitoring
     OverheatMonitor.instance.start(
@@ -78,11 +83,8 @@ class _AppRootState extends State<AppRoot> {
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
-          final arduinoOk = data['arduino_connected'] == true;
-
-          if (arduinoOk) {
-            setState(() => _initStatus = 'UART: OK');
-            await Future.delayed(const Duration(milliseconds: 300));
+          if (data['arduino_connected'] == true) {
+            _updateStatus('UART', 'Ready');
             return;
           }
         }
@@ -90,28 +92,24 @@ class _AppRootState extends State<AppRoot> {
         // Backend not reachable yet - keep trying
       }
 
-      // Not connected yet
-      setState(() => _initStatus = 'UART: waiting...');
+      _updateStatus('UART', 'Waiting');
       await Future.delayed(retryDelay);
     }
 
     // Timeout - proceed anyway (UI will show stale data indicators)
-    setState(() => _initStatus = 'UART: timeout');
-    await Future.delayed(const Duration(milliseconds: 500));
+    _updateStatus('UART', 'Timeout');
   }
 
   /// Preload navigator images into Flutter's image cache
   ///
   /// Scans for all PNGs in the navigator folder and precaches them.
-  /// Runs silently - no status updates (meant to run parallel with UART).
   Future<void> _preloadNavigatorImages() async {
     final images = await ConfigService.instance.getNavigatorImages();
     for (final file in images) {
-      // precacheImage needs a context, but we're in initState territory
-      // Use the root context via a post-frame callback workaround
       if (!mounted) return;
       await precacheImage(FileImage(file), context);
     }
+    _updateStatus('Navigator', 'Ready');
   }
 
   @override
@@ -121,7 +119,7 @@ class _AppRootState extends State<AppRoot> {
     if (_overheatTriggered) {
       child = const OverheatScreen(key: ValueKey('overheat'));
     } else if (!_initialized) {
-      child = SplashScreen(key: const ValueKey('splash'), status: _initStatus);
+      child = SplashScreen(key: const ValueKey('splash'), statuses: _initStatuses);
     } else {
       child = const DashboardScreen(key: ValueKey('dashboard'));
     }

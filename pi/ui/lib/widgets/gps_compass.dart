@@ -10,7 +10,7 @@ class GpsCompass extends StatelessWidget {
   bool get _hasSignal => heading != null && !heading!.isNaN && heading! >= 0 && heading! < 360;
 
   String get _displayHeading {
-    if (!_hasSignal) return '—°';
+    if (!_hasSignal) return '—-'; // Intentional double dash
     return '${heading!.round()}°';
   }
 
@@ -30,12 +30,12 @@ class GpsCompass extends StatelessWidget {
         Flexible(
           flex: 3,
           child: Transform.rotate(
-            angle: angle,
+            angle: _hasSignal ? angle : 0,
             child: FittedBox(
               fit: BoxFit.contain,
               child: Icon(
-                Icons.navigation,
-                size: 60,
+                _hasSignal ? Icons.navigation : Icons.navigation_outlined,
+                size: 80,
                 color: color,
               ),
             ),
@@ -48,7 +48,7 @@ class GpsCompass extends StatelessWidget {
             child: Text(
               _displayHeading,
               style: TextStyle(
-                fontSize: 30,
+                fontSize: 60,
                 color: color,
                 fontFamily: 'DIN1451',
               ),

@@ -13,6 +13,7 @@ import '../widgets/system_bar.dart';
 import '../widgets/debug_console.dart';
 import '../widgets/whiskey_mark.dart';
 import '../widgets/accel_graph.dart';
+import '../widgets/gps_compass.dart';
 
 // test service for triggers
 import '../services/test_flipflop_service.dart';
@@ -55,6 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // From backend - GPS data
   double? _gpsSpeed;
+  double? _gpsTrack;
 
   // Placeholder values for system bar
   int? _gpsSatellites;
@@ -105,6 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _gpsSub = WebSocketService.instance.gpsStream.listen((data) {
       setState(() {
         _gpsSpeed = data.speed;
+        _gpsTrack = data.track;
         // Derive satellites from mode (placeholder logic)
         _gpsSatellites = data.mode == 3 ? 8 : (data.mode == 2 ? 4 : 0);
       });
@@ -140,6 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final cachedGps = WebSocketService.instance.latestGps;
     if (cachedGps != null) {
       _gpsSpeed = cachedGps.speed;
+      _gpsTrack = cachedGps.track;
       _gpsSatellites = cachedGps.mode == 3 ? 8 : (cachedGps.mode == 2 ? 4 : 0);
     }
 
@@ -236,7 +240,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         StatBox(value: _formatInt(_rpm), label: 'RPM', isWarning: () => (_rpm ?? 0) > 4000),
-                        GpsCompass(heading: 147),
+                        GpsCompass(heading: _gpsTrack),
                         StatBox(value: _formatGear(_gear), label: 'GEAR'),
                       ],
                     ),

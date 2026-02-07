@@ -204,7 +204,7 @@ class WebSocketService {
         final gps = GpsData.fromJson(data);
         _latestGps = gps;
         _gpsController.add(gps);
-        _log('gps: ${gps.speed?.toStringAsFixed(1) ?? "-"}m/s mode${gps.mode ?? "-"}');
+        _log('gps: ${gps.speed?.toStringAsFixed(1) ?? "-"}m/s hdg=${gps.track?.round() ?? "-"}° mode${gps.mode ?? "-"}');
       }
     });
 

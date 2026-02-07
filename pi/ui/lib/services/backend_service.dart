@@ -39,8 +39,9 @@ class GpsData {
   final double? alt;
   final double? track;
   final int? mode; // 0=no fix, 2=2D, 3=3D
+  final int? satellites;
 
-  GpsData({this.lat, this.lon, this.speed, this.alt, this.track, this.mode});
+  GpsData({this.lat, this.lon, this.speed, this.alt, this.track, this.mode, this.satellites});
 
   factory GpsData.fromJson(Map<String, dynamic> json) {
     return GpsData(
@@ -50,6 +51,7 @@ class GpsData {
       alt: (json['alt'] as num?)?.toDouble(),
       track: (json['track'] as num?)?.toDouble(),
       mode: (json['mode'] as num?)?.toInt(),
+      satellites: (json['satellites'] as num?)?.toInt(),
     );
   }
 }

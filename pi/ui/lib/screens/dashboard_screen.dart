@@ -108,8 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _gpsSpeed = data.speed;
         _gpsTrack = data.track;
-        // Derive satellites from mode (placeholder logic)
-        _gpsSatellites = data.mode == 3 ? 8 : (data.mode == 2 ? 4 : 0);
+        _gpsSatellites = data.satellites;
       });
     });
 
@@ -144,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (cachedGps != null) {
       _gpsSpeed = cachedGps.speed;
       _gpsTrack = cachedGps.track;
-      _gpsSatellites = cachedGps.mode == 3 ? 8 : (cachedGps.mode == 2 ? 4 : 0);
+      _gpsSatellites = cachedGps.satellites;
     }
 
     _wsState = WebSocketService.instance.connectionState;

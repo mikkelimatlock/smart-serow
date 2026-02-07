@@ -7,11 +7,21 @@ class GpsCompass extends StatelessWidget {
 
   const GpsCompass({super.key, this.heading});
 
-  bool get _hasSignal => heading != null && !heading!.isNaN && heading! >= 0 && heading! < 360;
+  bool get _hasSignal => heading != null;
 
   String get _displayHeading {
-    if (!_hasSignal) return '—-'; // Intentional double dash
-    return '${heading!.round()}°';
+    if (!_hasSignal) return 'N/A'; // Just make it clear; redundant anyways, this only gets called when _hasSignal
+    return '${(heading! % 360).round()}'; // No need for the degree symbol
+  }
+
+  String get _compassDirection {
+    if (!_hasSignal) return '';
+    final directions = [
+      'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'
+    ];
+    final index = ((heading! % 360) / 22.5).round() % 16;
+    return directions[index];
   }
 
   @override
@@ -19,7 +29,7 @@ class GpsCompass extends StatelessWidget {
     final theme = AppTheme.of(context);
 
     // No signal = subdued color, valid = foreground
-    final color = _hasSignal ? theme.foreground : theme.subdued;
+    final iconColour = _hasSignal ? theme.foreground : theme.highlight;
 
     // Convert to radians, 0 = no rotation when no signal
     final angle = _hasSignal ? (heading! * math.pi / 180.0) : 0.0;
@@ -35,8 +45,8 @@ class GpsCompass extends StatelessWidget {
               fit: BoxFit.contain,
               child: Icon(
                 _hasSignal ? Icons.navigation : Icons.navigation_outlined,
-                size: 80,
-                color: color,
+                size: 120,
+                color: iconColour,
               ),
             ),
           ),
@@ -46,10 +56,10 @@ class GpsCompass extends StatelessWidget {
           child: FittedBox(
             fit: BoxFit.contain,
             child: Text(
-              _displayHeading,
+              _hasSignal ? "${_displayHeading} ${_compassDirection}" : "N/A",
               style: TextStyle(
-                fontSize: 60,
-                color: color,
+                fontSize: 80,
+                color: theme.subdued,
                 fontFamily: 'DIN1451',
               ),
             ),

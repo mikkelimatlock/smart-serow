@@ -34,6 +34,7 @@ All services use singleton pattern with `ServiceName.instance`.
 |--------|---------|
 | `NavigatorWidget` | Animated character with emotion states (images precached at startup) |
 | `AccelGraph` | Real-time accelerometer visualization with gravity compensation |
+| `GpsCompass` | GPS heading compass with rotating navigation icon and degree readout |
 | `WhiskeyMark` | Gimbal-style horizon indicator using IMU roll/pitch |
 | `SystemBar` | Top status bar (time, connection, Pi temp) |
 | `StatBox` | Reusable metric display box |

@@ -1,13 +1,13 @@
 {
   "dark": {
-    "background": "#404040",
+    "background": "#303030",
     "foreground": "#EAEAEA",
     "highlight": "#FA1504",
     "subdued": "#fda052"
   },
   "bright": {
     "background": "#fda052",
-    "foreground": "#202020",
+    "foreground": "#303030",
     "highlight": "#df2100",
     "subdued": "#EAEAEA"
   }
